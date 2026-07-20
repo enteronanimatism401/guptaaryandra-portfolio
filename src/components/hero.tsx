@@ -3,7 +3,8 @@ import { ArrowRight, Download, MapPin } from "lucide-react";
 import { HeroObject } from "./hero-object";
 
 const MODULES = ["Cloud", "Linux", "DevOps", "AI"];
-const NAME = "ARYANDRA GUPTA";
+const NAME_LINES = ["ARYANDRA", "GUPTA"];
+const NAME_TOTAL = NAME_LINES.reduce((s, w) => s + w.length, 0);
 
 export function Hero() {
   const [step, setStep] = useState(0);
@@ -29,7 +30,7 @@ export function Hero() {
     if (!complete) return;
     const id = window.setInterval(() => {
       setLetters((n) => {
-        if (n >= NAME.length) {
+        if (n >= NAME_TOTAL) {
           window.clearInterval(id);
           window.setTimeout(() => setNameDone(true), 500);
           return n;
@@ -78,42 +79,44 @@ export function Hero() {
             </div>
 
             <h1 className="hero-name mt-10 font-plex text-[44px] leading-[1.02] tracking-tight sm:text-[64px] md:text-[80px]">
-              {NAME.split("").map((ch, i) => {
-                const shown = i < letters;
+              {NAME_LINES.map((word, wi) => {
+                const offset = NAME_LINES.slice(0, wi).reduce((s, w) => s + w.length, 0);
                 return (
-                  <span
-                    key={i}
-                    className="hero-letter"
-                    style={{
-                      display: ch === " " ? "inline" : "inline-block",
-                      opacity: shown ? 1 : 0,
-                      filter: shown ? "blur(0)" : "blur(8px)",
-                      transform: shown ? "translateY(0)" : "translateY(6px)",
-                      transition: "opacity 380ms ease, filter 380ms ease, transform 380ms ease",
-                    }}
-                  >
-                    {ch === " " ? "\u00A0" : ch}
-                    {ch === "A" && i === 7 /* end of ARYANDRA */ ? <br /> : null}
+                  <span key={wi} className="block">
+                    {word.split("").map((ch, i) => {
+                      const idx = offset + i;
+                      const shown = idx < letters;
+                      return (
+                        <span
+                          key={i}
+                          className="inline-block"
+                          style={{
+                            opacity: shown ? 1 : 0,
+                            filter: shown ? "blur(0)" : "blur(8px)",
+                            transform: shown ? "translateY(0)" : "translateY(6px)",
+                            transition: "opacity 380ms ease, filter 380ms ease, transform 380ms ease",
+                          }}
+                        >
+                          {ch}
+                        </span>
+                      );
+                    })}
+                    {wi === NAME_LINES.length - 1 && (
+                      <>
+                        <span
+                          className="text-accent inline-block"
+                          style={{ opacity: nameDone ? 1 : 0, transition: "opacity 400ms ease" }}
+                        >
+                          .
+                        </span>
+                        {!nameDone && (
+                          <span className="blink text-accent ml-1 inline-block">▍</span>
+                        )}
+                      </>
+                    )}
                   </span>
                 );
               })}
-              <span
-                className="text-accent"
-                style={{
-                  opacity: nameDone ? 1 : 0,
-                  transition: "opacity 400ms ease",
-                }}
-              >
-                .
-              </span>
-              {!nameDone && (
-                <span
-                  className="blink text-accent ml-1"
-                  style={{ display: "inline-block", width: "0.5em" }}
-                >
-                  ▍
-                </span>
-              )}
             </h1>
 
             <div
