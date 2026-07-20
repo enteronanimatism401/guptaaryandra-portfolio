@@ -10,7 +10,7 @@ const LINKS = [
 
 export function Contact() {
   return (
-    <Section id="contact" label="07 · Contact" title="Open a connection." meta="./transmit">
+    <Section id="contact" label="06 · Connect" title="Let's build something." meta="./connect">
       <div className="grid gap-px overflow-hidden rounded-lg border border-border md:grid-cols-2">
         {LINKS.map(({ icon: Icon, label, value, href }) => (
           <a
