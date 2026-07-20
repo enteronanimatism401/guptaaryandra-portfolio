@@ -1,4 +1,5 @@
 import { Section } from "../section";
+import { TypedTitle } from "../typed-title";
 
 const NODES = [
   { title: "Cloud Engineer", note: "AWS · Linux · Networking", state: "current" },
