@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Github, Linkedin, FileText } from "lucide-react";
+import { Github, Linkedin, FileText, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
 const SECTIONS = [
