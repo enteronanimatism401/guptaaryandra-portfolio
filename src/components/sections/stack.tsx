@@ -202,9 +202,9 @@ export function Stack() {
 
       <div ref={ref} className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Tree */}
-        <div className="relative">
+        <div className="relative -mx-5 sm:mx-0 overflow-x-auto">
           <pre
-            className="font-plex text-[13px] leading-[1.9] text-muted-foreground"
+            className="font-plex text-[11px] sm:text-[12px] md:text-[13px] leading-[1.9] text-muted-foreground px-5 sm:px-0"
             style={{ whiteSpace: "pre", margin: 0 }}
           >
             {rows.map((r, i) => {
