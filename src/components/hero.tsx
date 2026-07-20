@@ -110,7 +110,7 @@ const SUBTITLE = [
 export function Hero() {
   return (
     <section id="top" className="relative border-b border-border">
-      <div className="mx-auto max-w-[1400px] px-6 pb-24 pt-16 md:px-10 md:pb-32 md:pt-24">
+      <div className="mx-auto max-w-[1400px] px-6 pb-24 pt-16 md:px-10 md:pb-32 md:pt-10 lg:pt-8">
         <div className="grid gap-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:items-center">
           <div>
             <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
