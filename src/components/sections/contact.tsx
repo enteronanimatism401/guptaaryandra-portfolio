@@ -3,8 +3,8 @@ import { Github, Linkedin, Mail, FileText, ArrowUpRight } from "lucide-react";
 
 const LINKS = [
   { icon: Mail, label: "email", value: "guptaaryandra@gmail.com", href: "mailto:guptaaryandra@gmail.com" },
-  { icon: Github, label: "github", value: "github.com/aryandra", href: "https://github.com/" },
-  { icon: Linkedin, label: "linkedin", value: "linkedin.com/in/aryandra", href: "https://linkedin.com/" },
+  { icon: Github, label: "github", value: "github.com/guptaaryandra", href: "https://github.com/guptaaryandra" },
+  { icon: Linkedin, label: "linkedin", value: "linkedin.com/in/gupta-aryandra", href: "https://linkedin.com/in/gupta-aryandra/" },
   { icon: FileText, label: "resume", value: "resume.pdf", href: "/resume.pdf" },
 ];
 
@@ -17,7 +17,7 @@ export function Contact() {
             key={label}
             href={href}
             target={href.startsWith("http") ? "_blank" : undefined}
-            rel="noreferrer"
+            rel="noreferrer noopener"
             className="group flex items-center justify-between gap-4 bg-panel p-6 transition-colors hover:bg-panel-2 reveal"
             data-cursor="card"
           >

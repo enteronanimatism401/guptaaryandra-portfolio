@@ -48,10 +48,10 @@ export function Navbar() {
       }}
     >
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-8 px-6 md:px-10">
-        <a href="#top" className="flex items-center gap-2 font-mono text-sm" data-cursor="link">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          <span className="text-foreground">aryandra</span>
-          <span className="text-muted-foreground">@infra:~$</span>
+        <a href="#top" className="flex items-center gap-2 font-plex text-sm" data-cursor="link">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+          <span className="text-foreground">guptaaryandra</span>
+          <span className="text-muted-foreground">@cloud:~$</span>
         </a>
         <nav className="hidden items-center gap-6 font-mono text-[13px] text-muted-foreground md:flex">
           {SECTIONS.map((s) => (
@@ -67,20 +67,20 @@ export function Navbar() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <a
-            href="https://github.com/"
+            href="https://github.com/guptaaryandra"
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             aria-label="GitHub"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-border-strong text-muted-foreground hover:text-foreground transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-accent hover:text-accent text-muted-foreground transition-all hover:-translate-y-0.5"
           >
             <Github className="h-3.5 w-3.5" />
           </a>
           <a
-            href="https://linkedin.com/"
+            href="https://linkedin.com/in/gupta-aryandra/"
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             aria-label="LinkedIn"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-border-strong text-muted-foreground hover:text-foreground transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-accent hover:text-accent text-muted-foreground transition-all hover:-translate-y-0.5"
           >
             <Linkedin className="h-3.5 w-3.5" />
           </a>
