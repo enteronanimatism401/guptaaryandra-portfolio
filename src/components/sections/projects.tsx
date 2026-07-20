@@ -99,11 +99,11 @@ function DeploymentSummary() {
         {rows.map(([icon, label, value]) => {
           const isStatus = icon === "✓" || icon === "✔";
           return (
-            <div key={label} className="flex items-center gap-2">
+            <div key={label} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className={isStatus ? "text-success" : icon === "◐" ? "text-accent" : "text-muted-foreground"}>{icon}</span>
-              <span className="min-w-[180px]">{label}</span>
+              <span className="text-muted-foreground/90 sm:min-w-[180px]">{label}</span>
               <span className="text-muted-foreground/60">:</span>
-              <span className="text-foreground">{value}</span>
+              <span className="text-foreground break-words">{value}</span>
             </div>
           );
         })}
