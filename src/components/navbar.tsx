@@ -222,7 +222,7 @@ export function Navbar() {
                   setMenuOpen(false);
                 }}
                 data-active={active === s.id}
-                className="flex items-center justify-between border-b border-border py-3 font-mono text-[13px] text-muted-foreground last:border-b-0 data-[active=true]:text-accent"
+                className="flex min-h-[44px] items-center justify-between border-b border-border py-3 font-mono text-[13px] text-muted-foreground last:border-b-0 data-[active=true]:text-accent"
               >
                 <span>{s.label}</span>
                 <span className="text-muted-foreground/50 text-[11px]">›</span>
