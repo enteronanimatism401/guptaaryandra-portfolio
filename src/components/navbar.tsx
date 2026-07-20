@@ -17,6 +17,7 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2,
 export function Navbar() {
   const [active, setActive] = useState<string>("");
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const rafRef = useRef<number | null>(null);
 
   const smoothScrollTo = (id: string) => {
