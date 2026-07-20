@@ -6,7 +6,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -82,12 +82,12 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=document.documentElement;if(t==='light'){d.classList.add('light');d.classList.remove('dark');}else{d.classList.add('dark');d.classList.remove('light');}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=document.documentElement;if(t==='light'){d.classList.add('light');d.classList.remove('dark');}else{d.classList.add('dark');d.classList.remove('light');}}catch(e){}try{if('scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}try{window.scrollTo(0,0);}catch(e){}try{document.documentElement.style.overflow='hidden';}catch(e){}})();`,
           }}
         />
         <HeadContent />
       </head>
-      <body>
+      <body style={{ overflow: "hidden" }}>
         {children}
         <Scripts />
       </body>
@@ -97,14 +97,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AmbientBackground />
-      {hydrated && <BootSequence />}
+      <BootSequence />
       <Outlet />
     </QueryClientProvider>
   );
 }
+
