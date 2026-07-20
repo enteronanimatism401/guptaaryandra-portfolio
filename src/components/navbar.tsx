@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, FileText } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -11,9 +11,41 @@ const SECTIONS = [
   { id: "contact", label: "Contact" },
 ];
 
+const DURATION = 800;
+const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
 export function Navbar() {
   const [active, setActive] = useState<string>("");
   const [scrolled, setScrolled] = useState(false);
+  const rafRef = useRef<number | null>(null);
+
+  const smoothScrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const targetY = el.getBoundingClientRect().top + window.scrollY - 56;
+    if (reduce) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const startY = window.scrollY;
+    const delta = targetY - startY;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      window.scrollTo(0, startY + delta * easeInOut(t));
+      if (t < 1) rafRef.current = requestAnimationFrame(step);
+      else rafRef.current = null;
+    };
+    rafRef.current = requestAnimationFrame(step);
+    if (history.replaceState) history.replaceState(null, "", `#${id}`);
+  };
+
+  const handleAnchor = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    smoothScrollTo(id);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -32,9 +64,26 @@ export function Navbar() {
       const el = document.getElementById(s.id);
       if (el) obs.observe(el);
     });
+
+    // Intercept all in-page anchor clicks (e.g. hero buttons) for smooth scroll
+    const docClick = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      const a = target?.closest("a") as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute("href");
+      if (!href || !href.startsWith("#") || href.length < 2) return;
+      const id = href.slice(1);
+      const el = document.getElementById(id);
+      if (!el) return;
+      ev.preventDefault();
+      smoothScrollTo(id);
+    };
+    document.addEventListener("click", docClick);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("click", docClick);
       obs.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
@@ -60,6 +109,7 @@ export function Navbar() {
               key={s.id}
               href={`#${s.id}`}
               data-active={active === s.id}
+              onClick={(e) => handleAnchor(e, s.id)}
             >
               {s.label.toLowerCase()}
             </a>
