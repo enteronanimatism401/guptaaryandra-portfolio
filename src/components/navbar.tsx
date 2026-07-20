@@ -7,7 +7,7 @@ const SECTIONS = [
   { id: "experience", label: "LOGBOOK" },
   { id: "projects", label: "DEPLOYMENTS" },
   { id: "learning", label: "LAB" },
-  { id: "stack", label: "STACK" },
+  { id: "stack", label: "ECOSYSTEM" },
   { id: "contact", label: "CONNECT" },
 ];
 
