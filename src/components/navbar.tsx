@@ -367,7 +367,7 @@ export function Navbar() {
                       className="font-mono text-[10px] tabular-nums"
                       style={{ color: isActive ? "var(--accent)" : "color-mix(in oklab, var(--muted-foreground) 90%, transparent)" }}
                     >
-                      0{i + 1}
+                      {navNumber(i)}
                     </span>
                     <span className="tracking-[0.04em]">{s.label}</span>
                   </span>
