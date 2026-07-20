@@ -326,4 +326,22 @@ header { animation: nav-slide 500ms ease both; }
 }
 .nav-center a[data-active="true"]::after { transform: scaleX(1); }
 
+@keyframes node-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 5px color-mix(in oklab, var(--accent) 14%, transparent),
+                0 0 18px color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--accent) 8%, transparent),
+                0 0 26px color-mix(in oklab, var(--accent) 70%, transparent);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+
 

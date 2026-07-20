@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Section } from "../section";
 
 type NodeT = {
@@ -18,6 +18,24 @@ type Entry = {
 };
 
 const ENTRIES: Entry[] = [
+  {
+    timeline: "2023 — Present",
+    role: "Bachelor of Computer Applications",
+    org: "Arunachal University of Studies",
+    status: "in-progress",
+    trees: [
+      {
+        name: "Computer Science",
+        children: [
+          { name: "Programming", desc: "Languages & paradigms" },
+          { name: "Operating Systems", desc: "Processes, memory, IO" },
+          { name: "DBMS", desc: "Database Management Systems" },
+          { name: "Networking", desc: "Protocols & topologies" },
+          { name: "Software Engineering", desc: "SDLC & design" },
+        ],
+      },
+    ],
+  },
   {
     timeline: "2025 — 2026",
     role: "Diploma in Cloud Computing with AI",
@@ -53,24 +71,6 @@ const ENTRIES: Entry[] = [
               { name: "Subnetting", desc: "IP range partitioning" },
             ],
           },
-        ],
-      },
-    ],
-  },
-  {
-    timeline: "2023 — Present",
-    role: "Bachelor of Computer Applications",
-    org: "Arunachal University of Studies",
-    status: "in-progress",
-    trees: [
-      {
-        name: "Computer Science",
-        children: [
-          { name: "Programming", desc: "Languages & paradigms" },
-          { name: "Operating Systems", desc: "Processes, memory, IO" },
-          { name: "DBMS", desc: "Database Management Systems" },
-          { name: "Networking", desc: "Protocols & topologies" },
-          { name: "Software Engineering", desc: "SDLC & design" },
         ],
       },
     ],
@@ -157,10 +157,6 @@ function StatusBadge({ kind }: { kind: StatusKind }) {
   );
 }
 
-/**
- * Recursive tree line renderer producing ASCII-style prefixes
- * (│  ├──  └──) with proper alignment.
- */
 type Line = {
   key: string;
   prefix: string;
@@ -174,15 +170,7 @@ type Line = {
 function flattenTree(root: NodeT): Line[] {
   const out: Line[] = [];
   const walk = (node: NodeT, prefix: string, connector: string, depth: number, isRoot: boolean, path: string) => {
-    out.push({
-      key: path,
-      prefix,
-      connector,
-      name: node.name,
-      desc: node.desc,
-      depth,
-      isRoot,
-    });
+    out.push({ key: path, prefix, connector, name: node.name, desc: node.desc, depth, isRoot });
     const kids = node.children || [];
     kids.forEach((child, i) => {
       const last = i === kids.length - 1;
@@ -195,25 +183,44 @@ function flattenTree(root: NodeT): Line[] {
   return out;
 }
 
-function DependencyTree({ root, active }: { root: NodeT; active: boolean }) {
+function DependencyTree({
+  root,
+  active,
+  dim,
+  startDelay,
+  perLineDelay = 90,
+}: {
+  root: NodeT;
+  active: boolean;
+  dim: boolean;
+  startDelay: number;
+  perLineDelay?: number;
+}) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [rootHover, setRootHover] = useState(false);
-  const lines = flattenTree(root);
+  const lines = useMemo(() => flattenTree(root), [root]);
 
   return (
-    <div className="font-mono text-[12px] leading-[1.85] select-none">
+    <div
+      className="font-mono text-[12px] leading-[1.85] select-none"
+      style={{
+        opacity: dim ? 0.35 : 1,
+        transition: "opacity 400ms ease",
+      }}
+    >
       {lines.map((ln, idx) => {
         const isHover = hovered === ln.key;
-        const revealDelay = active ? idx * 55 : 0;
+        const delay = startDelay + idx * perLineDelay;
         const pulseActive = rootHover;
         return (
           <div
             key={ln.key}
             className="group flex items-start whitespace-pre"
             style={{
-              opacity: active ? (isHover ? 1 : ln.isRoot ? 1 : 0.72) : 0,
-              transform: active ? "translateX(0)" : "translateX(-4px)",
-              transition: `opacity 380ms ease ${revealDelay}ms, transform 380ms ease ${revealDelay}ms`,
+              opacity: active ? (isHover ? 1 : ln.isRoot ? 1 : 0.75) : 0,
+              transform: active ? "translateX(0)" : "translateX(-6px)",
+              filter: active ? "blur(0)" : "blur(2px)",
+              transition: `opacity 420ms ease ${delay}ms, transform 420ms ease ${delay}ms, filter 420ms ease ${delay}ms`,
             }}
             onMouseEnter={() => {
               setHovered(ln.key);
@@ -252,11 +259,7 @@ function DependencyTree({ root, active }: { root: NodeT; active: boolean }) {
             {ln.desc && isHover && !ln.isRoot && (
               <span
                 className="ml-3 font-mono text-[10.5px] uppercase tracking-[0.18em]"
-                style={{
-                  color: "var(--muted-foreground)",
-                  opacity: 0.9,
-                  animation: "fade-in 220ms ease-out",
-                }}
+                style={{ color: "var(--muted-foreground)", opacity: 0.9, animation: "fade-in 220ms ease-out" }}
               >
                 → {ln.desc}
               </span>
@@ -269,71 +272,208 @@ function DependencyTree({ root, active }: { root: NodeT; active: boolean }) {
 }
 
 export function Experience() {
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const [nodeYs, setNodeYs] = useState<number[]>([]);
+  const [railHeight, setRailHeight] = useState(0);
+  const [progressY, setProgressY] = useState(0);
+  const [revealed, setRevealed] = useState<boolean[]>(() => ENTRIES.map(() => false));
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+
+  // measure node positions relative to container
+  useLayoutEffect(() => {
+    const measure = () => {
+      const c = containerRef.current;
+      if (!c) return;
+      const cRect = c.getBoundingClientRect();
+      const ys = nodeRefs.current.map((n) => {
+        if (!n) return 0;
+        const r = n.getBoundingClientRect();
+        // dot sits at top-[9px] inside pl-8 column; approximate ~18px from item top
+        return r.top - cRect.top + 16;
+      });
+      setNodeYs(ys);
+      setRailHeight(c.getBoundingClientRect().height);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  // scroll-driven progress + sequential reveal
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      const c = containerRef.current;
+      if (!c) return;
+      const rect = c.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // trigger line ~ 55% down the viewport
+      const trigger = vh * 0.55;
+      const rawY = trigger - rect.top;
+      const clamped = Math.max(0, Math.min(rect.height, rawY));
+      setProgressY(clamped);
+
+      setRevealed((prev) => {
+        let changed = false;
+        const next = prev.slice();
+        nodeYs.forEach((y, i) => {
+          if (!next[i] && clamped >= y - 8) {
+            next[i] = true;
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [nodeYs]);
+
+  // currently active node = last revealed
+  const activeIdx = useMemo(() => {
+    let idx = -1;
+    revealed.forEach((r, i) => {
+      if (r) idx = i;
+    });
+    return idx;
+  }, [revealed]);
 
   return (
-    <Section
-      id="experience"
-      label="02 · Experience"
-      title="Engineering logbook."
-      meta="./log/experience"
-    >
-      <div className="relative">
-        {/* vertical timeline rail */}
+    <Section id="experience" label="02 · Experience" title="Engineering logbook." meta="./log/experience">
+      <div ref={containerRef} className="relative">
+        {/* rail base */}
         <div
           aria-hidden
-          className="pointer-events-none absolute left-[7px] top-2 bottom-2 w-px"
-          style={{ background: "var(--border)" }}
+          className="pointer-events-none absolute left-[7px] top-0 w-px"
+          style={{ background: "var(--border)", height: railHeight }}
         />
+        {/* rail progress fill */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-[7px] top-0 w-px"
+          style={{
+            height: progressY,
+            background: "linear-gradient(to bottom, color-mix(in oklab, var(--accent) 60%, transparent), var(--accent))",
+            transition: "height 120ms linear",
+            boxShadow: "0 0 8px color-mix(in oklab, var(--accent) 50%, transparent)",
+          }}
+        />
+        {/* traveling dot */}
+        {progressY > 0 && progressY < railHeight && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -translate-x-1/2"
+            style={{
+              left: "7px",
+              top: progressY,
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              boxShadow:
+                "0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent), 0 0 18px color-mix(in oklab, var(--accent) 70%, transparent)",
+              transform: "translate(-50%, -50%)",
+              transition: "top 140ms linear",
+            }}
+          />
+        )}
 
-        <ul className="space-y-14">
+        <ul className="space-y-16">
           {ENTRIES.map((it, i) => {
-            const active = activeIdx === i;
+            const isActive = activeIdx === i;
+            const isRevealed = revealed[i];
+            const isHovered = hoverIdx === i;
+            const isDimmed = hoverIdx !== null ? !isHovered : activeIdx !== -1 && !isActive;
+            const treeStartDelay = 260; // after content fades in
             return (
               <li
                 key={i}
-                className="reveal grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]"
-                onMouseEnter={() => setActiveIdx(i)}
-                onMouseLeave={() => setActiveIdx((v) => (v === i ? null : v))}
+                ref={(el) => {
+                  nodeRefs.current[i] = el;
+                }}
+                className="grid gap-8 md:gap-[100px] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]"
+                onMouseEnter={() => setHoverIdx(i)}
+                onMouseLeave={() => setHoverIdx((v) => (v === i ? null : v))}
                 style={{
-                  opacity: activeIdx === null || active ? 1 : 0.55,
-                  transition: "opacity 300ms ease",
+                  opacity: isDimmed ? 0.4 : 1,
+                  transition: "opacity 400ms ease",
                 }}
               >
                 {/* left: meta */}
                 <div className="relative pl-8">
                   <span
                     aria-hidden
-                    className="absolute left-0 top-[9px] block h-3.5 w-3.5 rounded-full"
+                    className="absolute left-0 top-[14px] block h-3.5 w-3.5 rounded-full"
                     style={{
-                      background: "var(--background)",
-                      border: `1px solid ${active ? "var(--accent)" : "var(--border-strong)"}`,
-                      boxShadow: active
-                        ? "0 0 0 4px color-mix(in oklab, var(--accent) 14%, transparent)"
+                      background: isRevealed ? "var(--accent)" : "var(--background)",
+                      border: `1px solid ${isRevealed ? "var(--accent)" : "var(--border-strong)"}`,
+                      boxShadow: isActive
+                        ? "0 0 0 5px color-mix(in oklab, var(--accent) 14%, transparent), 0 0 18px color-mix(in oklab, var(--accent) 55%, transparent)"
                         : "none",
-                      transition: "box-shadow 260ms ease, border-color 260ms ease",
+                      animation: isActive ? "node-pulse 2.4s ease-in-out infinite" : "none",
+                      transition: "background 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
                     }}
                   />
-                  <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                    {it.timeline}
-                  </div>
-                  <div className="mt-2 font-plex text-xl md:text-[22px] leading-snug text-foreground">
-                    {it.role}
-                  </div>
-                  {it.org && (
-                    <div className="mt-1 font-mono text-[12px] text-muted-foreground">
-                      {it.org}
+                  {/* left connector highlight on hover */}
+                  <span
+                    aria-hidden
+                    className="absolute left-[7px] top-[14px] h-px"
+                    style={{
+                      width: isHovered ? 22 : 0,
+                      background: "var(--accent)",
+                      opacity: isHovered ? 0.7 : 0,
+                      transition: "width 260ms ease, opacity 260ms ease",
+                    }}
+                  />
+                  <div
+                    style={{
+                      opacity: isRevealed ? 1 : 0,
+                      transform: isRevealed ? "translateY(0)" : "translateY(6px)",
+                      filter: isRevealed ? "blur(0)" : "blur(3px)",
+                      transition: "opacity 460ms ease 120ms, transform 460ms ease 120ms, filter 460ms ease 120ms",
+                    }}
+                  >
+                    <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                      {it.timeline}
                     </div>
-                  )}
-                  <div className="mt-4">
-                    <StatusBadge kind={it.status} />
+                    <div className="mt-2 font-plex text-xl md:text-[22px] leading-snug text-foreground">
+                      {it.role}
+                    </div>
+                    {it.org && (
+                      <div className="mt-1 font-mono text-[12px] text-muted-foreground">{it.org}</div>
+                    )}
+                    <div className="mt-4">
+                      <StatusBadge kind={it.status} />
+                    </div>
                   </div>
                 </div>
 
-                {/* right: dependency tree(s) */}
-                <div className="space-y-8 md:pl-4">
+                {/* right: dependency trees */}
+                <div className="space-y-8">
                   {it.trees.map((tree, ti) => (
-                    <DependencyTree key={ti} root={tree} active />
+                    <DependencyTree
+                      key={ti}
+                      root={tree}
+                      active={isRevealed}
+                      dim={isDimmed}
+                      startDelay={treeStartDelay + ti * 220}
+                    />
                   ))}
                 </div>
               </li>
