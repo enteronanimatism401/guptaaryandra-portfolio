@@ -269,6 +269,7 @@ function DependencyTree({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
