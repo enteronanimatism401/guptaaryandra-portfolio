@@ -33,13 +33,18 @@ export function Section({
 
   return (
     <section id={id} ref={ref} className="relative border-b border-border">
-      <div className="mx-auto max-w-[1400px] px-5 sm:px-6 md:px-10 py-16 sm:py-20 md:py-28">
+      <div className="container-page py-14 sm:py-20 md:py-28">
         <div className="mb-8 sm:mb-10 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 reveal">
           <div className="min-w-0">
             <div className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
               <span className="text-accent mr-2">§</span>{label}
             </div>
-            <h2 className="mt-3 font-plex text-2xl sm:text-3xl md:text-5xl tracking-tight break-words">{title}</h2>
+            <h2
+              className="mt-3 font-plex tracking-tight break-words"
+              style={{ fontSize: "clamp(1.5rem, 5.2vw, 3rem)", lineHeight: 1.08 }}
+            >
+              {title}
+            </h2>
           </div>
           {meta && (
             <div className="hidden md:block font-mono text-[11px] text-muted-foreground shrink-0">{meta}</div>
