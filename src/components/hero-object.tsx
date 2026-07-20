@@ -187,7 +187,7 @@ export function HeroObject() {
   return (
     <div
       ref={wrapRef}
-      className="relative mx-auto flex w-full max-w-[460px] flex-col items-center justify-center"
+      className="relative mx-auto flex w-full max-w-[440px] flex-col items-center justify-center md:max-w-[360px] lg:max-w-[380px]"
       onMouseEnter={startReplay}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
@@ -205,7 +205,7 @@ export function HeroObject() {
         viewBox={`0 0 ${V_W} ${V_H}`}
         className="h-auto w-full"
         style={{
-          maxHeight: 620,
+          maxHeight: 560,
           transform: `translate3d(${cam.x}px, ${cam.y}px, 0) scale(${cam.zoom})`,
           transition: "transform 400ms cubic-bezier(0.22, 1, 0.36, 1)",
           willChange: "transform",
