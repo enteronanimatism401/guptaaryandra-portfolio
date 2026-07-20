@@ -1,231 +1,286 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Git Branch Pipeline — futuristic, minimal, wireframe.
- * main branch with two feature branches (feature-ai, feature-devops)
- * merging back into main. Idle breathing animation; hover re-plays
- * the pipeline animation. Ends in merged state.
+ * Vertical Git history visualization.
+ * - Default: a clean, static merged history (like `git log --graph`).
+ * - Hover: replays the branching + merging flow with a glowing runner
+ *   commit that travels down main, checks out feature/ai, commits, merges,
+ *   then feature/devops, and finally settles back on main.
+ * - Commit hover reveals a tiny hash + message tooltip.
  */
 
-type Commit = { id: string; x: number; y: number; branch: string; t: number };
+const V_W = 340;
+const V_H = 620;
+const MAIN_X = 90;
+const FEAT_X = 210;
 
-const V_W = 560;
-const V_H = 380;
+type Commit = {
+  id: string;
+  x: number;
+  y: number;
+  branch: "main" | "ai" | "ops";
+  hash: string;
+  label: string;
+  // progress threshold at which the runner "creates" this commit
+  activateAt: number;
+};
 
 const COMMITS: Commit[] = [
-  { id: "m0", x: 60,  y: 100, branch: "main", t: 0.00 },
-  { id: "m1", x: 130, y: 100, branch: "main", t: 0.06 },
-
-  // feature-ai (upper)
-  { id: "a1", x: 210, y: 40,  branch: "ai",   t: 0.20 },
-  { id: "a2", x: 280, y: 40,  branch: "ai",   t: 0.30 },
-  { id: "a3", x: 350, y: 40,  branch: "ai",   t: 0.40 },
-
-  // main continues
-  { id: "m2", x: 210, y: 100, branch: "main", t: 0.18 },
-  { id: "m3", x: 280, y: 100, branch: "main", t: 0.26 },
-
-  // feature-devops (lower)
-  { id: "d1", x: 210, y: 170, branch: "ops",  t: 0.34 },
-  { id: "d2", x: 280, y: 170, branch: "ops",  t: 0.44 },
-
-  // merge point
-  { id: "mg", x: 430, y: 100, branch: "merge", t: 0.72 },
-  { id: "mh", x: 510, y: 100, branch: "main",  t: 0.86 },
+  { id: "m1", x: MAIN_X, y: 60,  branch: "main", hash: "a18f2c1", label: "chore: init repo",          activateAt: 0.00 },
+  { id: "m2", x: MAIN_X, y: 120, branch: "main", hash: "93bc71e", label: "feat: core services",       activateAt: 0.08 },
+  { id: "a1", x: FEAT_X, y: 170, branch: "ai",   hash: "c91f8d2", label: "feat(ai): agent runtime",   activateAt: 0.22 },
+  { id: "a2", x: FEAT_X, y: 220, branch: "ai",   hash: "7f4e08b", label: "feat(ai): tool router",     activateAt: 0.32 },
+  { id: "m3", x: MAIN_X, y: 280, branch: "main", hash: "2d81fa4", label: "merge: feature/ai",         activateAt: 0.46 },
+  { id: "m4", x: MAIN_X, y: 340, branch: "main", hash: "5ea9c30", label: "feat: platform api",        activateAt: 0.54 },
+  { id: "d1", x: FEAT_X, y: 390, branch: "ops",  hash: "ab17f3e", label: "feat(ops): terraform mod",  activateAt: 0.66 },
+  { id: "d2", x: FEAT_X, y: 440, branch: "ops",  hash: "b442e51", label: "feat(ops): ci pipeline",    activateAt: 0.76 },
+  { id: "m5", x: MAIN_X, y: 500, branch: "main", hash: "c0d3ed9", label: "merge: feature/devops",     activateAt: 0.90 },
+  { id: "m6", x: MAIN_X, y: 560, branch: "main", hash: "e7a1b02", label: "release: v1.0.0",           activateAt: 0.99 },
 ];
 
-// Edges with timing (t0 -> t1). Feature branches curve out from main and back in.
-type Edge = { d: string; t0: number; t1: number; accent?: boolean; branch: string };
-const EDGES: Edge[] = [
-  // main baseline
-  { d: `M 60 100 L 130 100`, t0: 0.00, t1: 0.06, branch: "main" },
-  { d: `M 130 100 L 210 100`, t0: 0.06, t1: 0.18, branch: "main" },
-  { d: `M 210 100 L 280 100`, t0: 0.18, t1: 0.26, branch: "main" },
-  { d: `M 280 100 L 430 100`, t0: 0.26, t1: 0.72, branch: "main" },
-  { d: `M 430 100 L 510 100`, t0: 0.72, t1: 0.86, branch: "main" },
-
-  // feature-ai branch out
-  { d: `M 130 100 C 170 100, 170 40, 210 40`, t0: 0.10, t1: 0.20, accent: true, branch: "ai" },
-  { d: `M 210 40 L 280 40`, t0: 0.20, t1: 0.30, accent: true, branch: "ai" },
-  { d: `M 280 40 L 350 40`, t0: 0.30, t1: 0.40, accent: true, branch: "ai" },
-  // merge back
-  { d: `M 350 40 C 400 40, 400 100, 430 100`, t0: 0.60, t1: 0.72, accent: true, branch: "ai" },
-
-  // feature-devops branch out
-  { d: `M 210 100 C 210 140, 170 170, 210 170`, t0: 0.28, t1: 0.34, branch: "ops" },
-  { d: `M 210 170 L 280 170`, t0: 0.34, t1: 0.44, branch: "ops" },
-  // merge back
-  { d: `M 280 170 C 380 170, 400 100, 430 100`, t0: 0.60, t1: 0.72, branch: "ops" },
+// Static edges drawn at all times (the completed history)
+const STATIC_EDGES: Array<{ d: string; branch: "main" | "ai" | "ops"; merged?: boolean }> = [
+  // main trunk (top → bottom)
+  { d: `M ${MAIN_X} 60  L ${MAIN_X} 120`, branch: "main" },
+  { d: `M ${MAIN_X} 120 L ${MAIN_X} 280`, branch: "main" },
+  { d: `M ${MAIN_X} 280 L ${MAIN_X} 340`, branch: "main" },
+  { d: `M ${MAIN_X} 340 L ${MAIN_X} 500`, branch: "main" },
+  { d: `M ${MAIN_X} 500 L ${MAIN_X} 560`, branch: "main" },
+  // feature/ai branch: out, along, back
+  { d: `M ${MAIN_X} 120 C ${MAIN_X} 155, ${FEAT_X} 135, ${FEAT_X} 170`, branch: "ai" },
+  { d: `M ${FEAT_X} 170 L ${FEAT_X} 220`, branch: "ai" },
+  { d: `M ${FEAT_X} 220 C ${FEAT_X} 255, ${MAIN_X} 245, ${MAIN_X} 280`, branch: "ai", merged: true },
+  // feature/devops branch
+  { d: `M ${MAIN_X} 340 C ${MAIN_X} 375, ${FEAT_X} 355, ${FEAT_X} 390`, branch: "ops" },
+  { d: `M ${FEAT_X} 390 L ${FEAT_X} 440`, branch: "ops" },
+  { d: `M ${FEAT_X} 440 C ${FEAT_X} 475, ${MAIN_X} 465, ${MAIN_X} 500`, branch: "ops", merged: true },
 ];
+
+// Continuous runner journey (used with getPointAtLength)
+const RUNNER_D =
+  `M ${MAIN_X} 60 ` +
+  `L ${MAIN_X} 120 ` +
+  `C ${MAIN_X} 155, ${FEAT_X} 135, ${FEAT_X} 170 ` +
+  `L ${FEAT_X} 220 ` +
+  `C ${FEAT_X} 255, ${MAIN_X} 245, ${MAIN_X} 280 ` +
+  `L ${MAIN_X} 340 ` +
+  `C ${MAIN_X} 375, ${FEAT_X} 355, ${FEAT_X} 390 ` +
+  `L ${FEAT_X} 440 ` +
+  `C ${FEAT_X} 475, ${MAIN_X} 465, ${MAIN_X} 500 ` +
+  `L ${MAIN_X} 560`;
+
+const RUN_DURATION = 5200; // ms
+
+const branchColor = (branch: "main" | "ai" | "ops", merged?: boolean) => {
+  if (merged) return "var(--success)";
+  if (branch === "ai") return "var(--accent)";
+  if (branch === "ops") return "var(--accent)";
+  return "var(--border-strong)";
+};
 
 export function HeroObject() {
+  const runnerPathRef = useRef<SVGPathElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<SVGSVGElement>(null);
-  const [t, setT] = useState(1); // pipeline progress 0..1, start already merged
-  const [hovering, setHovering] = useState(false);
+  const [progress, setProgress] = useState(1); // start in fully merged state
+  const [runnerPt, setRunnerPt] = useState<{ x: number; y: number } | null>(null);
+  const [replays, setReplays] = useState(0);
+  const [hoveredCommit, setHoveredCommit] = useState<string | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-  // Parallax
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let raf = 0;
-    let tx = 0, ty = 0, cx = 0, cy = 0;
-    const onMove = (e: MouseEvent) => {
-      const r = wrapRef.current?.getBoundingClientRect();
-      if (!r) return;
-      const px = (e.clientX - (r.left + r.width / 2)) / r.width;
-      const py = (e.clientY - (r.top + r.height / 2)) / r.height;
-      tx = Math.max(-1, Math.min(1, px)) * 8;
-      ty = Math.max(-1, Math.min(1, py)) * 6;
-    };
-    const loop = () => {
-      cx += (tx - cx) * 0.06;
-      cy += (ty - cy) * 0.06;
-      if (innerRef.current) {
-        innerRef.current.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("mousemove", onMove); };
-  }, []);
+  // Trigger replay when user hovers the container (debounced by animation state)
+  const startReplay = () => {
+    if (rafRef.current) return;
+    setReplays((n) => n + 1);
+  };
 
-  // Idle: play once on mount. On hover: replay.
   useEffect(() => {
-    let raf = 0;
-    const duration = 2600;
+    if (replays === 0) return;
     const start = performance.now();
-    setT(0);
+    setProgress(0);
     const step = (now: number) => {
-      const p = Math.min(1, (now - start) / duration);
-      // ease out
-      setT(1 - Math.pow(1 - p, 2.4));
-      if (p < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [hovering]);
+      const raw = Math.min(1, (now - start) / RUN_DURATION);
+      // ease in/out, no bounce
+      const eased = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+      setProgress(eased);
 
-  const edgeDraw = (e: Edge) => {
-    if (t <= e.t0) return 0;
-    if (t >= e.t1) return 1;
-    return (t - e.t0) / (e.t1 - e.t0);
+      const path = runnerPathRef.current;
+      if (path) {
+        const len = path.getTotalLength();
+        const pt = path.getPointAtLength(eased * len);
+        setRunnerPt({ x: pt.x, y: pt.y });
+      }
+
+      if (raw < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        rafRef.current = null;
+        // fade out runner
+        setTimeout(() => setRunnerPt(null), 600);
+      }
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
+  }, [replays]);
+
+  const isActivated = (c: Commit) => progress >= c.activateAt;
+  const nearRunner = (c: Commit) => {
+    if (!runnerPt) return 0;
+    const dx = c.x - runnerPt.x;
+    const dy = c.y - runnerPt.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return Math.max(0, 1 - dist / 80);
   };
 
   return (
     <div
       ref={wrapRef}
-      className="relative flex h-[420px] w-full items-center justify-center md:h-[480px]"
-      onMouseEnter={() => setHovering((v) => !v)}
-      aria-label="Git branch pipeline"
+      className="relative mx-auto flex w-full max-w-[420px] items-center justify-center"
+      onMouseEnter={startReplay}
+      aria-label="Git history"
     >
       {/* soft ambient glow */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(360px 260px at 50% 50%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%)",
+            "radial-gradient(280px 380px at 50% 50%, color-mix(in oklab, var(--accent) 6%, transparent), transparent 70%)",
         }}
       />
 
-      {/* breathing wrapper */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ animation: "hero-breathe 6s ease-in-out infinite" }}>
-        <svg
-          ref={innerRef}
-          viewBox={`0 0 ${V_W} ${V_H}`}
-          className="h-full w-full"
-          style={{ willChange: "transform" }}
-        >
-          <defs>
-            <filter id="pipe-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="b" />
-              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-            <linearGradient id="pipe-accent" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.4" />
-              <stop offset="50%" stopColor="var(--accent)" stopOpacity="1" />
-              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.4" />
-            </linearGradient>
-          </defs>
+      <svg
+        viewBox={`0 0 ${V_W} ${V_H}`}
+        className="h-auto w-full"
+        style={{ maxHeight: 620 }}
+      >
+        <defs>
+          <filter id="runner-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
 
-          {/* Branch labels */}
-          <g fontFamily="JetBrains Mono, monospace" fontSize="9" fill="var(--muted-foreground)">
-            <text x="20" y="104" textAnchor="end">main</text>
-            <text x="200" y="30" textAnchor="end">feature-ai</text>
-            <text x="200" y="188" textAnchor="end">feature-devops</text>
-            <text x="530" y="90" textAnchor="start" fill="var(--accent)">HEAD</text>
-          </g>
+        {/* Hidden runner path (used for point sampling) */}
+        <path ref={runnerPathRef} d={RUNNER_D} fill="none" stroke="none" />
 
-          {/* Edges */}
-          {EDGES.map((e, i) => {
-            const p = edgeDraw(e);
-            return (
-              <path
-                key={i}
-                d={e.d}
-                fill="none"
-                stroke={e.accent ? "url(#pipe-accent)" : "var(--border-strong)"}
-                strokeWidth={e.accent ? "1.4" : "1"}
-                strokeOpacity={e.branch === "main" ? 0.9 : 1}
-                pathLength={1}
-                strokeDasharray="1"
-                strokeDashoffset={1 - p}
-                strokeLinecap="round"
+        {/* Labels */}
+        <g fontFamily="JetBrains Mono, monospace" fontSize="9" fill="var(--muted-foreground)">
+          <text x={MAIN_X} y={30} textAnchor="middle" fill="var(--accent)">HEAD</text>
+          <text x={MAIN_X} y={598} textAnchor="middle">main</text>
+          <text x={FEAT_X + 14} y={175} textAnchor="start">feature/ai</text>
+          <text x={FEAT_X + 14} y={395} textAnchor="start">feature/devops</text>
+        </g>
+
+        {/* Static edges */}
+        {STATIC_EDGES.map((e, i) => {
+          const color = branchColor(e.branch, e.merged);
+          const isMain = e.branch === "main";
+          return (
+            <path
+              key={i}
+              d={e.d}
+              fill="none"
+              stroke={color}
+              strokeOpacity={isMain ? 0.55 : e.merged ? 0.55 : 0.6}
+              strokeWidth={isMain ? 1.1 : 1.2}
+              strokeLinecap="round"
+            />
+          );
+        })}
+
+        {/* Commits */}
+        {COMMITS.map((c) => {
+          const activated = isActivated(c);
+          const proximity = nearRunner(c);
+          const isFeature = c.branch !== "main";
+          const baseColor = isFeature ? "var(--accent)" : "var(--foreground)";
+          const idle = !runnerPt;
+          const brightness = idle ? (isFeature ? 0.9 : 0.75) : Math.min(1, 0.55 + proximity * 0.6);
+          const ringOpacity = idle ? 0.12 : 0.1 + proximity * 0.35;
+          const isHover = hoveredCommit === c.id;
+          return (
+            <g
+              key={c.id}
+              style={{ cursor: "pointer" }}
+              onMouseEnter={() => setHoveredCommit(c.id)}
+              onMouseLeave={() => setHoveredCommit((v) => (v === c.id ? null : v))}
+            >
+              {/* larger hit target */}
+              <circle cx={c.x} cy={c.y} r={14} fill="transparent" />
+              <circle
+                cx={c.x} cy={c.y} r={9}
+                fill={baseColor}
+                opacity={ringOpacity}
               />
-            );
-          })}
-
-          {/* Commit dots */}
-          {COMMITS.map((c) => {
-            const appear = t >= c.t;
-            const isAccent = c.branch === "ai" || c.branch === "merge" || c.id === "mh";
-            const r = c.branch === "merge" ? 5 : 3.2;
-            return (
-              <g
-                key={c.id}
-                style={{
-                  opacity: appear ? 1 : 0,
-                  transition: "opacity 200ms ease",
-                }}
-              >
-                <circle cx={c.x} cy={c.y} r={r + 3} fill={isAccent ? "var(--accent)" : "var(--foreground)"} opacity="0.14" />
-                <circle
-                  cx={c.x} cy={c.y} r={r}
-                  fill={isAccent ? "var(--accent)" : "var(--foreground)"}
-                  filter="url(#pipe-glow)"
-                >
-                  <animate
-                    attributeName="opacity"
-                    values="0.7;1;0.7"
-                    dur="3.4s"
-                    repeatCount="indefinite"
-                    begin={`${(c.t * 2)}s`}
+              <circle
+                cx={c.x} cy={c.y}
+                r={activated ? 4 : 3.2}
+                fill={activated ? baseColor : "var(--background)"}
+                stroke={baseColor}
+                strokeWidth={1}
+                opacity={brightness}
+                style={{ transition: "opacity 200ms ease, r 200ms ease" }}
+              />
+              {isHover && (
+                <g style={{ pointerEvents: "none" }}>
+                  <rect
+                    x={c.x + (c.branch === "main" ? -132 : 16)}
+                    y={c.y - 18}
+                    width={116}
+                    height={36}
+                    rx={4}
+                    fill="var(--panel)"
+                    stroke="var(--border-strong)"
+                    strokeWidth={0.8}
                   />
-                </circle>
-              </g>
-            );
-          })}
-
-          {/* HEAD marker box */}
-          {t >= 0.86 && (
-            <g style={{ animation: "hero-fade 400ms ease both" }}>
-              <rect x="498" y="86" width="26" height="28" rx="3" fill="none" stroke="var(--accent)" strokeOpacity="0.5" strokeWidth="0.6" strokeDasharray="2 2" />
+                  <text
+                    x={c.x + (c.branch === "main" ? -124 : 24)}
+                    y={c.y - 4}
+                    fontFamily="JetBrains Mono, monospace"
+                    fontSize={9}
+                    fill="var(--accent)"
+                  >
+                    {c.hash}
+                  </text>
+                  <text
+                    x={c.x + (c.branch === "main" ? -124 : 24)}
+                    y={c.y + 9}
+                    fontFamily="JetBrains Mono, monospace"
+                    fontSize={8.5}
+                    fill="var(--muted-foreground)"
+                  >
+                    {c.label.length > 18 ? c.label.slice(0, 17) + "…" : c.label}
+                  </text>
+                </g>
+              )}
             </g>
-          )}
-        </svg>
-      </div>
+          );
+        })}
 
-      {/* corner brackets */}
-      <div className="pointer-events-none absolute inset-6 opacity-40">
-        <span className="absolute left-0 top-0 h-3 w-3 border-l border-t border-border-strong" />
-        <span className="absolute right-0 top-0 h-3 w-3 border-r border-t border-border-strong" />
-        <span className="absolute left-0 bottom-0 h-3 w-3 border-l border-b border-border-strong" />
-        <span className="absolute right-0 bottom-0 h-3 w-3 border-r border-b border-border-strong" />
-      </div>
+        {/* Traveling runner */}
+        {runnerPt && (
+          <g style={{ pointerEvents: "none" }}>
+            <circle cx={runnerPt.x} cy={runnerPt.y} r={12} fill="var(--accent)" opacity={0.18} />
+            <circle cx={runnerPt.x} cy={runnerPt.y} r={5.5} fill="var(--accent)" filter="url(#runner-glow)" />
+          </g>
+        )}
+      </svg>
 
-      {/* label */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-        pipeline · {t >= 0.86 ? "merged" : "building"} · hover to replay
+      {/* Status pill */}
+      <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+        {runnerPt ? (
+          <span>
+            <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full bg-accent align-middle" />
+            replaying history
+          </span>
+        ) : (
+          <span>
+            <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full align-middle" style={{ background: "var(--success)" }} />
+            merged successfully · hover to replay
+          </span>
+        )}
       </div>
     </div>
   );

@@ -1,106 +1,18 @@
-import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Download, MapPin } from "lucide-react";
 import { HeroObject } from "./hero-object";
 
-const NAME = "ARYANDRA GUPTA";
-const SCRAMBLE_WORDS = [
-  "CLOUD ARCHITECT",
-  "DEVOPS ENGINEER",
-  "AGENTIC AI BUILDER",
-  "ARYANDRA GUPTA",
-];
-const SCRAMBLE_CHARS = "!<>-_\\/[]{}—=+*^?#01ABCDEFGHJKMNPQRSTVWXYZ";
-
-function useScramble() {
-  const [text, setText] = useState(NAME);
-  const rafRef = useRef<number | null>(null);
-  const runningRef = useRef(false);
-
-  const stop = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
-    runningRef.current = false;
-  };
-
-  const scrambleTo = (target: string): Promise<void> =>
-    new Promise((resolve) => {
-      const from = text;
-      const length = Math.max(from.length, target.length);
-      const queue: Array<{ from: string; to: string; start: number; end: number; char?: string }> = [];
-      for (let i = 0; i < length; i++) {
-        const f = from[i] || "";
-        const to = target[i] || "";
-        const start = Math.floor(Math.random() * 8);
-        const end = start + Math.floor(Math.random() * 12) + 6;
-        queue.push({ from: f, to, start, end });
-      }
-      let frame = 0;
-      const tick = () => {
-        let output = "";
-        let complete = 0;
-        for (let i = 0; i < queue.length; i++) {
-          const { from: f, to, start, end } = queue[i];
-          if (frame >= end) {
-            complete++;
-            output += to;
-          } else if (frame >= start) {
-            if (!queue[i].char || Math.random() < 0.28) {
-              queue[i].char = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-            }
-            output += `\u0000${queue[i].char}`; // marker for accent
-          } else {
-            output += f;
-          }
-        }
-        setText(output);
-        if (complete === queue.length) {
-          resolve();
-        } else {
-          frame++;
-          rafRef.current = requestAnimationFrame(tick);
-        }
-      };
-      rafRef.current = requestAnimationFrame(tick);
-    });
-
-  const play = async () => {
-    if (runningRef.current) return;
-    runningRef.current = true;
-    for (const word of SCRAMBLE_WORDS) {
-      if (!runningRef.current) break;
-      await scrambleTo(word);
-      await new Promise((r) => setTimeout(r, 520));
-    }
-    runningRef.current = false;
-  };
-
-  useEffect(() => stop, []);
-
-  return { text, play };
-}
-
 function ScrambleName() {
-  const { text, play } = useScramble();
-  // Render with accent scramble chars
   return (
     <h1
-      className="hero-name font-plex text-[44px] leading-[1.02] tracking-tight sm:text-[64px] md:text-[80px]"
-      onMouseEnter={play}
+      className="hero-name font-plex tracking-tight"
+      style={{
+        fontSize: "clamp(2.75rem, 7.5vw, 6.5rem)",
+        lineHeight: 0.98,
+        letterSpacing: "-0.02em",
+      }}
     >
-      {Array.from(text).map((ch, i) => {
-        if (ch === "\u0000") return null;
-        const prev = text[i - 1];
-        const isScramble = prev === "\u0000";
-        return (
-          <span
-            key={i}
-            className="inline-block"
-            style={{ color: isScramble ? "var(--accent)" : undefined, transition: "color 120ms ease" }}
-          >
-            {ch === " " ? "\u00A0" : ch}
-          </span>
-        );
-      })}
+      <span className="block whitespace-nowrap">ARYANDRA</span>
+      <span className="block whitespace-nowrap">GUPTA</span>
     </h1>
   );
 }
