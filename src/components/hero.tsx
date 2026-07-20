@@ -88,7 +88,7 @@ function ScrambleName() {
     <h1
       className="hero-name font-plex tracking-tight cursor-default select-none"
       style={{
-        fontSize: "clamp(2.75rem, 7.5vw, 6.5rem)",
+        fontSize: "clamp(2.25rem, 9vw, 6.5rem)",
         lineHeight: 0.98,
         letterSpacing: "-0.02em",
       }}
