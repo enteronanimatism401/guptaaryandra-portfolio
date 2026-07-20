@@ -1,227 +1,217 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// Deterministic pseudo-random for stable SSR/client render
-function seeded(n: number) {
-  const x = Math.sin(n * 9973.13) * 43758.5453;
-  return x - Math.floor(x);
-}
+/**
+ * Git Branch Pipeline — futuristic, minimal, wireframe.
+ * main branch with two feature branches (feature-ai, feature-devops)
+ * merging back into main. Idle breathing animation; hover re-plays
+ * the pipeline animation. Ends in merged state.
+ */
 
-const NODE_COUNT = 14;
-const NODES = Array.from({ length: NODE_COUNT }).map((_, i) => {
-  const ring = i < 6 ? 0 : 1;
-  const idx = ring === 0 ? i : i - 6;
-  const count = ring === 0 ? 6 : 8;
-  const radius = ring === 0 ? 78 : 148;
-  const angle = (idx / count) * Math.PI * 2 + (ring === 0 ? 0 : Math.PI / 8);
-  const wobble = (seeded(i + 1) - 0.5) * 18;
-  return {
-    id: i,
-    x: Math.cos(angle) * (radius + wobble),
-    y: Math.sin(angle) * (radius + wobble),
-    r: ring === 0 ? 3.2 : 2.4,
-    accent: i % 5 === 0,
-  };
-});
+type Commit = { id: string; x: number; y: number; branch: string; t: number };
 
-// Build edges: hub-to-inner + inner-to-outer nearest
-const EDGES: Array<[number, number]> = [];
-NODES.forEach((n, i) => {
-  if (i === 0) return;
-  if (i < 6) EDGES.push([0, i]);
-});
-for (let i = 6; i < NODE_COUNT; i++) {
-  // connect each outer to two nearest inner
-  const dists = NODES.slice(1, 6)
-    .map((n, k) => ({ k: k + 1, d: Math.hypot(n.x - NODES[i].x, n.y - NODES[i].y) }))
-    .sort((a, b) => a.d - b.d);
-  EDGES.push([dists[0].k, i]);
-  if (dists[1]) EDGES.push([dists[1].k, i]);
-}
+const V_W = 560;
+const V_H = 380;
 
-const PARTICLES = Array.from({ length: 22 }).map((_, i) => ({
-  id: i,
-  x: (seeded(i * 3.1) - 0.5) * 420,
-  y: (seeded(i * 7.7) - 0.5) * 420,
-  s: 0.4 + seeded(i * 11.3) * 1.4,
-  d: 4 + seeded(i * 5.5) * 6,
-  accent: i % 6 === 0,
-}));
+const COMMITS: Commit[] = [
+  { id: "m0", x: 60,  y: 100, branch: "main", t: 0.00 },
+  { id: "m1", x: 130, y: 100, branch: "main", t: 0.06 },
+
+  // feature-ai (upper)
+  { id: "a1", x: 210, y: 40,  branch: "ai",   t: 0.20 },
+  { id: "a2", x: 280, y: 40,  branch: "ai",   t: 0.30 },
+  { id: "a3", x: 350, y: 40,  branch: "ai",   t: 0.40 },
+
+  // main continues
+  { id: "m2", x: 210, y: 100, branch: "main", t: 0.18 },
+  { id: "m3", x: 280, y: 100, branch: "main", t: 0.26 },
+
+  // feature-devops (lower)
+  { id: "d1", x: 210, y: 170, branch: "ops",  t: 0.34 },
+  { id: "d2", x: 280, y: 170, branch: "ops",  t: 0.44 },
+
+  // merge point
+  { id: "mg", x: 430, y: 100, branch: "merge", t: 0.72 },
+  { id: "mh", x: 510, y: 100, branch: "main",  t: 0.86 },
+];
+
+// Edges with timing (t0 -> t1). Feature branches curve out from main and back in.
+type Edge = { d: string; t0: number; t1: number; accent?: boolean; branch: string };
+const EDGES: Edge[] = [
+  // main baseline
+  { d: `M 60 100 L 130 100`, t0: 0.00, t1: 0.06, branch: "main" },
+  { d: `M 130 100 L 210 100`, t0: 0.06, t1: 0.18, branch: "main" },
+  { d: `M 210 100 L 280 100`, t0: 0.18, t1: 0.26, branch: "main" },
+  { d: `M 280 100 L 430 100`, t0: 0.26, t1: 0.72, branch: "main" },
+  { d: `M 430 100 L 510 100`, t0: 0.72, t1: 0.86, branch: "main" },
+
+  // feature-ai branch out
+  { d: `M 130 100 C 170 100, 170 40, 210 40`, t0: 0.10, t1: 0.20, accent: true, branch: "ai" },
+  { d: `M 210 40 L 280 40`, t0: 0.20, t1: 0.30, accent: true, branch: "ai" },
+  { d: `M 280 40 L 350 40`, t0: 0.30, t1: 0.40, accent: true, branch: "ai" },
+  // merge back
+  { d: `M 350 40 C 400 40, 400 100, 430 100`, t0: 0.60, t1: 0.72, accent: true, branch: "ai" },
+
+  // feature-devops branch out
+  { d: `M 210 100 C 210 140, 170 170, 210 170`, t0: 0.28, t1: 0.34, branch: "ops" },
+  { d: `M 210 170 L 280 170`, t0: 0.34, t1: 0.44, branch: "ops" },
+  // merge back
+  { d: `M 280 170 C 380 170, 400 100, 430 100`, t0: 0.60, t1: 0.72, branch: "ops" },
+];
 
 export function HeroObject() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<SVGSVGElement>(null);
+  const [t, setT] = useState(1); // pipeline progress 0..1, start already merged
+  const [hovering, setHovering] = useState(false);
 
+  // Parallax
   useEffect(() => {
     if (typeof window === "undefined") return;
     let raf = 0;
     let tx = 0, ty = 0, cx = 0, cy = 0;
-    let angle = 0;
     const onMove = (e: MouseEvent) => {
-      const rect = wrapRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const px = (e.clientX - (rect.left + rect.width / 2)) / rect.width;
-      const py = (e.clientY - (rect.top + rect.height / 2)) / rect.height;
-      tx = Math.max(-1, Math.min(1, px)) * 14;
-      ty = Math.max(-1, Math.min(1, py)) * 10;
+      const r = wrapRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const px = (e.clientX - (r.left + r.width / 2)) / r.width;
+      const py = (e.clientY - (r.top + r.height / 2)) / r.height;
+      tx = Math.max(-1, Math.min(1, px)) * 8;
+      ty = Math.max(-1, Math.min(1, py)) * 6;
     };
     const loop = () => {
       cx += (tx - cx) * 0.06;
       cy += (ty - cy) * 0.06;
-      angle += 0.06;
       if (innerRef.current) {
-        innerRef.current.style.transform =
-          `translate3d(${cx}px, ${cy}px, 0) rotate(${angle * 0.05}deg)`;
+        innerRef.current.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
       }
       raf = requestAnimationFrame(loop);
     };
     window.addEventListener("mousemove", onMove, { passive: true });
     raf = requestAnimationFrame(loop);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("mousemove", onMove);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("mousemove", onMove); };
   }, []);
+
+  // Idle: play once on mount. On hover: replay.
+  useEffect(() => {
+    let raf = 0;
+    const duration = 2600;
+    const start = performance.now();
+    setT(0);
+    const step = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      // ease out
+      setT(1 - Math.pow(1 - p, 2.4));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [hovering]);
+
+  const edgeDraw = (e: Edge) => {
+    if (t <= e.t0) return 0;
+    if (t >= e.t1) return 1;
+    return (t - e.t0) / (e.t1 - e.t0);
+  };
 
   return (
     <div
       ref={wrapRef}
-      className="relative flex items-center justify-center h-[420px] md:h-[520px] w-full"
-      aria-hidden
+      className="relative flex h-[420px] w-full items-center justify-center md:h-[480px]"
+      onMouseEnter={() => setHovering((v) => !v)}
+      aria-label="Git branch pipeline"
     >
-      {/* ambient glow */}
+      {/* soft ambient glow */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(320px 260px at 50% 50%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%)",
+            "radial-gradient(360px 260px at 50% 50%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%)",
         }}
       />
-      {/* concentric rings */}
-      <svg
-        viewBox="-220 -220 440 440"
-        className="absolute inset-0 h-full w-full opacity-40"
-      >
-        {[80, 150, 210].map((r) => (
-          <circle
-            key={r}
-            cx="0"
-            cy="0"
-            r={r}
-            fill="none"
-            stroke="var(--border)"
-            strokeDasharray="2 4"
-          />
-        ))}
-      </svg>
 
-      <div ref={innerRef} className="absolute inset-0" style={{ willChange: "transform" }}>
-        <svg viewBox="-220 -220 440 440" className="h-full w-full">
+      {/* breathing wrapper */}
+      <div className="absolute inset-0 flex items-center justify-center" style={{ animation: "hero-breathe 6s ease-in-out infinite" }}>
+        <svg
+          ref={innerRef}
+          viewBox={`0 0 ${V_W} ${V_H}`}
+          className="h-full w-full"
+          style={{ willChange: "transform" }}
+        >
           <defs>
-            <radialGradient id="hub-grad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.95" />
-              <stop offset="70%" stopColor="var(--accent)" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-            </radialGradient>
+            <filter id="pipe-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <linearGradient id="pipe-accent" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.4" />
+              <stop offset="50%" stopColor="var(--accent)" stopOpacity="1" />
+              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.4" />
+            </linearGradient>
           </defs>
 
+          {/* Branch labels */}
+          <g fontFamily="JetBrains Mono, monospace" fontSize="9" fill="var(--muted-foreground)">
+            <text x="20" y="104" textAnchor="end">main</text>
+            <text x="200" y="30" textAnchor="end">feature-ai</text>
+            <text x="200" y="188" textAnchor="end">feature-devops</text>
+            <text x="530" y="90" textAnchor="start" fill="var(--accent)">HEAD</text>
+          </g>
+
           {/* Edges */}
-          {EDGES.map(([a, b], i) => {
-            const A = NODES[a];
-            const B = NODES[b];
+          {EDGES.map((e, i) => {
+            const p = edgeDraw(e);
             return (
-              <line
+              <path
                 key={i}
-                x1={A.x}
-                y1={A.y}
-                x2={B.x}
-                y2={B.y}
-                stroke="var(--border-strong)"
-                strokeWidth="0.6"
-                opacity="0.7"
-              >
-                <animate
-                  attributeName="opacity"
-                  values="0.25;0.75;0.25"
-                  dur={`${4 + (i % 5)}s`}
-                  repeatCount="indefinite"
-                  begin={`${(i % 7) * 0.3}s`}
-                />
-              </line>
+                d={e.d}
+                fill="none"
+                stroke={e.accent ? "url(#pipe-accent)" : "var(--border-strong)"}
+                strokeWidth={e.accent ? "1.4" : "1"}
+                strokeOpacity={e.branch === "main" ? 0.9 : 1}
+                pathLength={1}
+                strokeDasharray="1"
+                strokeDashoffset={1 - p}
+                strokeLinecap="round"
+              />
             );
           })}
 
-          {/* Hub aura */}
-          <circle cx="0" cy="0" r="42" fill="url(#hub-grad)" />
-          {/* Hub */}
-          <circle
-            cx="0"
-            cy="0"
-            r="5.5"
-            fill="var(--accent)"
-          />
-          <circle
-            cx="0"
-            cy="0"
-            r="9"
-            fill="none"
-            stroke="var(--accent)"
-            strokeOpacity="0.5"
-            strokeWidth="0.8"
-          />
-
-          {/* Nodes */}
-          {NODES.slice(1).map((n) => (
-            <g key={n.id}>
-              <circle
-                cx={n.x}
-                cy={n.y}
-                r={n.r + 3}
-                fill={n.accent ? "var(--accent)" : "var(--foreground)"}
-                opacity="0.08"
-              />
-              <circle
-                cx={n.x}
-                cy={n.y}
-                r={n.r}
-                fill={n.accent ? "var(--accent)" : "var(--foreground)"}
+          {/* Commit dots */}
+          {COMMITS.map((c) => {
+            const appear = t >= c.t;
+            const isAccent = c.branch === "ai" || c.branch === "merge" || c.id === "mh";
+            const r = c.branch === "merge" ? 5 : 3.2;
+            return (
+              <g
+                key={c.id}
+                style={{
+                  opacity: appear ? 1 : 0,
+                  transition: "opacity 200ms ease",
+                }}
               >
-                <animate
-                  attributeName="opacity"
-                  values="0.55;1;0.55"
-                  dur={`${3 + (n.id % 4)}s`}
-                  repeatCount="indefinite"
-                  begin={`${(n.id % 5) * 0.4}s`}
-                />
-              </circle>
-            </g>
-          ))}
+                <circle cx={c.x} cy={c.y} r={r + 3} fill={isAccent ? "var(--accent)" : "var(--foreground)"} opacity="0.14" />
+                <circle
+                  cx={c.x} cy={c.y} r={r}
+                  fill={isAccent ? "var(--accent)" : "var(--foreground)"}
+                  filter="url(#pipe-glow)"
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.7;1;0.7"
+                    dur="3.4s"
+                    repeatCount="indefinite"
+                    begin={`${(c.t * 2)}s`}
+                  />
+                </circle>
+              </g>
+            );
+          })}
 
-          {/* Particles */}
-          {PARTICLES.map((p) => (
-            <circle
-              key={p.id}
-              cx={p.x}
-              cy={p.y}
-              r={p.s}
-              fill={p.accent ? "var(--accent)" : "var(--muted-foreground)"}
-              opacity="0.5"
-            >
-              <animate
-                attributeName="cy"
-                values={`${p.y};${p.y - p.d};${p.y}`}
-                dur={`${5 + (p.id % 5)}s`}
-                repeatCount="indefinite"
-                begin={`${(p.id % 4) * 0.6}s`}
-              />
-              <animate
-                attributeName="opacity"
-                values="0;0.7;0"
-                dur={`${5 + (p.id % 5)}s`}
-                repeatCount="indefinite"
-                begin={`${(p.id % 4) * 0.6}s`}
-              />
-            </circle>
-          ))}
+          {/* HEAD marker box */}
+          {t >= 0.86 && (
+            <g style={{ animation: "hero-fade 400ms ease both" }}>
+              <rect x="498" y="86" width="26" height="28" rx="3" fill="none" stroke="var(--accent)" strokeOpacity="0.5" strokeWidth="0.6" strokeDasharray="2 2" />
+            </g>
+          )}
         </svg>
       </div>
 
@@ -235,7 +225,7 @@ export function HeroObject() {
 
       {/* label */}
       <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-        infra.topology · live
+        pipeline · {t >= 0.86 ? "merged" : "building"} · hover to replay
       </div>
     </div>
   );
