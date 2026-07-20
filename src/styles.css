@@ -99,9 +99,6 @@
     background: var(--color-accent);
     color: var(--color-accent-foreground);
   }
-  @media (min-width: 768px) {
-    html, body, * { cursor: none !important; }
-  }
 }
 
 /* Utility classes */
