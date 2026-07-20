@@ -1,241 +1,274 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type Node = {
-  id: string;
-  x: number;
-  y: number;
-  branch: "main" | "dev" | "merge";
-  label?: string;
-  hash?: string;
+/**
+ * Engineering Workstation Boot Screen.
+ * Shows on every fresh load / refresh (not during in-app navigation).
+ * Terminal boot lines type sequentially alongside a compact vertical Git graph
+ * with an orange pulse traveling through commits.
+ */
+
+type Line = {
+  cmd: string;
+  // optional green confirmation shown after the line finishes
+  ok?: string;
 };
 
-// Layout: main branch top row, dev branch bottom row, then merge back
-const NODES: Node[] = [
-  { id: "init", x: 40,  y: 40, branch: "main", label: "init",     hash: "a18f2c" },
-  { id: "m1",   x: 130, y: 40, branch: "main", label: "main",     hash: "93bc71" },
-  { id: "d1",   x: 220, y: 90, branch: "dev",  label: "dev",      hash: "2d81fa" },
-  { id: "d2",   x: 310, y: 90, branch: "dev",  hash: "7f4e08" },
-  { id: "m2",   x: 400, y: 40, branch: "merge", label: "merge",   hash: "c0d3ed" },
-  { id: "head", x: 490, y: 40, branch: "main", label: "HEAD",     hash: "ready0" },
+const LINES: Line[] = [
+  { cmd: "$ boot" },
+  { cmd: "Initializing engineering workspace..." },
+  { cmd: "Loading cloud modules...",         ok: "✓ Cloud modules loaded" },
+  { cmd: "Loading deployment records...",    ok: "✓ Deployment history restored" },
+  { cmd: "Mounting engineering lab...",      ok: "✓ Lab initialized" },
+  { cmd: "Connecting infrastructure graph...", ok: "✓ Ecosystem online" },
+  { cmd: "Syncing repository state..." },
+  { cmd: "Checking dependencies..." },
+  { cmd: "Restoring session..." },
+  { cmd: "HEAD → main" },
+  { cmd: "Welcome back, Aryandra." },
+  { cmd: "Launching Control Center..." },
 ];
 
-const EDGES: Array<{ from: string; to: string; curved?: boolean }> = [
-  { from: "init", to: "m1" },
-  { from: "m1",   to: "d1", curved: true },
-  { from: "d1",   to: "d2" },
-  { from: "d2",   to: "m2", curved: true },
-  { from: "m1",   to: "m2" }, // main line passes through
-  { from: "m2",   to: "head" },
-];
+// Per-character typing speed (ms). Kept lively but readable.
+const CHAR_MS = 18;
+// Pause between lines (ms).
+const LINE_GAP = 120;
+// Delay after last line before fading out (ms).
+const HOLD_MS = 500;
+// Fade out duration.
+const FADE_MS = 650;
 
-const LOG_LINES = [
-  "$ git init",
-  "  Initialized empty repository",
-  "$ git checkout -b main",
-  "  Switched to new branch 'main'",
-  "$ git commit -m 'bootstrap'",
-  "  [main a18f2c] bootstrap",
-  "$ git commit -m 'core services'",
-  "  [main 93bc71] core services",
-  "$ git checkout -b dev",
-  "  Switched to new branch 'dev'",
-  "$ git commit -m 'experimental modules'",
-  "  [dev 2d81fa] experimental modules",
-  "$ git commit -m 'refine pipeline'",
-  "  [dev 7f4e08] refine pipeline",
-  "$ git checkout main",
-  "$ git merge dev --no-ff",
-  "  Merge made by the 'recursive' strategy.",
-  "  HEAD -> main",
-  "  Repository ready.",
-];
-
-// Timeline: when each node appears (ms)
-const NODE_TIMES: Record<string, number> = {
-  init: 200,
-  m1:   700,
-  d1:   1150,
-  d2:   1600,
-  m2:   2200,
-  head: 2700,
-};
-const TOTAL = 3300;
+// Git graph nodes — vertical trunk.
+const GRAPH_H = 260;
+const NODE_YS = [30, 90, 150, 210]; // 4 commits
+const HEAD_Y = 0;
 
 export function BootSequence() {
-  const [visible, setVisible] = useState<boolean | null>(null);
+  // Session-scoped: shows on every refresh, not during SPA navigation.
+  const [visible, setVisible] = useState(true);
   const [closing, setClosing] = useState(false);
-  const [t, setT] = useState(0);
-  const [logIdx, setLogIdx] = useState(0);
+
+  // Typing state
+  const [lineIdx, setLineIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [completed, setCompleted] = useState<boolean[]>(() => LINES.map(() => false));
+
+  const reducedMotion = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const seen = localStorage.getItem("boot_seen_git_v1");
-    if (seen) { setVisible(false); return; }
-    setVisible(true);
-    localStorage.setItem("boot_seen_git_v1", "1");
+    reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Lock body scroll during boot
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
+  // Type each line char-by-char, then advance.
   useEffect(() => {
     if (!visible) return;
-    const start = performance.now();
-    let raf = 0;
-    const step = (now: number) => {
-      const elapsed = now - start;
-      setT(Math.min(elapsed, TOTAL + 400));
-      if (elapsed < TOTAL + 400) raf = requestAnimationFrame(step);
-      else {
-        setTimeout(() => setClosing(true), 350);
-        setTimeout(() => setVisible(false), 1100);
-      }
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [visible]);
+    if (lineIdx >= LINES.length) return;
 
+    const currentText = LINES[lineIdx].cmd;
+
+    if (charIdx < currentText.length) {
+      const t = setTimeout(() => setCharIdx((c) => c + 1), reducedMotion.current ? 0 : CHAR_MS);
+      return () => clearTimeout(t);
+    }
+
+    // finished current line
+    const t = setTimeout(() => {
+      setCompleted((prev) => {
+        const next = prev.slice();
+        next[lineIdx] = true;
+        return next;
+      });
+      setLineIdx((i) => i + 1);
+      setCharIdx(0);
+    }, reducedMotion.current ? 0 : LINE_GAP);
+    return () => clearTimeout(t);
+  }, [visible, lineIdx, charIdx]);
+
+  // When all lines done, hold then fade.
   useEffect(() => {
-    if (!visible) return;
-    const interval = setInterval(() => {
-      setLogIdx((i) => (i >= LOG_LINES.length ? i : i + 1));
-    }, 180);
-    return () => clearInterval(interval);
-  }, [visible]);
+    if (lineIdx < LINES.length) return;
+    const t1 = setTimeout(() => setClosing(true), HOLD_MS);
+    const t2 = setTimeout(() => setVisible(false), HOLD_MS + FADE_MS);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [lineIdx]);
+
+  // Git pulse progression synced to typing progress.
+  // Total progress 0..1 across all lines.
+  const totalChars = useMemo(() => LINES.reduce((a, l) => a + l.cmd.length, 0), []);
+  const typedChars = useMemo(() => {
+    let sum = 0;
+    for (let i = 0; i < lineIdx; i++) sum += LINES[i].cmd.length;
+    return sum + charIdx;
+  }, [lineIdx, charIdx]);
+  const progress = Math.min(1, typedChars / totalChars);
+
+  // Pulse position along trunk (HEAD → last commit)
+  const pulseY = HEAD_Y + progress * (NODE_YS[NODE_YS.length - 1] - HEAD_Y);
+  // Which commit nodes are "activated" (pulse has passed them)
+  const activated = NODE_YS.map((y) => pulseY >= y - 6);
 
   if (!visible) return null;
-
-  const progress = Math.min(100, Math.round((t / TOTAL) * 100));
-
-  // Compute edge draw progress based on time between endpoint appearances
-  const edgeProgress = (from: string, to: string) => {
-    const a = NODE_TIMES[from], b = NODE_TIMES[to];
-    if (t < a) return 0;
-    if (t >= b) return 1;
-    return (t - a) / (b - a);
-  };
 
   return (
     <div
       className="fixed inset-0 z-[10000] flex items-center justify-center bg-background"
-      style={{ opacity: closing ? 0 : 1, transition: "opacity 700ms ease" }}
+      style={{
+        opacity: closing ? 0 : 1,
+        transition: `opacity ${FADE_MS}ms ease`,
+      }}
+      aria-label="Booting engineering workstation"
+      role="dialog"
     >
-      <div className="bg-scanlines absolute inset-0 opacity-30" />
+      {/* Same design language: grid + scanlines + orange ambient glow */}
+      <div className="bg-grid absolute inset-0 opacity-[0.35]" />
+      <div className="bg-scanlines absolute inset-0 opacity-20" />
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(700px 500px at 50% 50%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 70%)",
+            "radial-gradient(720px 520px at 50% 45%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 70%)",
         }}
       />
 
-      <div className="relative w-full max-w-2xl px-8">
-        <div className="mb-6 flex items-center justify-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          initializing repository
+      <div className="relative flex w-full max-w-[880px] flex-col items-start gap-10 px-8 md:flex-row md:items-center md:gap-16">
+        {/* Terminal output */}
+        <div className="flex-1 font-mono text-[12.5px] leading-[1.85] md:text-[13px]">
+          {LINES.slice(0, lineIdx + 1).map((line, i) => {
+            const isActive = i === lineIdx && lineIdx < LINES.length;
+            const shown = isActive ? line.cmd.slice(0, charIdx) : line.cmd;
+            const done = completed[i];
+            const isCommand = line.cmd.startsWith("$");
+            const isHead = line.cmd.startsWith("HEAD");
+            return (
+              <div key={i} className="flex flex-col">
+                <div
+                  style={{
+                    color: isCommand
+                      ? "var(--foreground)"
+                      : isHead
+                      ? "var(--accent)"
+                      : "var(--muted-foreground)",
+                  }}
+                >
+                  {shown}
+                  {isActive && (
+                    <span
+                      className="ml-0.5 inline-block h-[1.05em] w-[7px] translate-y-[2px] bg-accent align-middle"
+                      style={{ animation: "blink 1s steps(2, start) infinite" }}
+                    />
+                  )}
+                </div>
+                {done && line.ok && (
+                  <div
+                    className="pl-3 text-[11px]"
+                    style={{
+                      color: "var(--success)",
+                      opacity: 0.85,
+                      animation: "fade-in 260ms ease-out both",
+                    }}
+                  >
+                    {line.ok}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Git graph */}
-        <div className="mx-auto mb-8 w-full max-w-[540px]">
-          <svg viewBox="0 0 540 140" className="h-[140px] w-full">
+        <div className="mx-auto w-[120px] shrink-0 md:mx-0 md:w-[140px]">
+          <svg viewBox={`0 0 80 ${GRAPH_H + 30}`} className="h-auto w-full" aria-hidden>
             <defs>
-              <filter id="glow-node" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="2.5" result="b" />
+              <filter id="boot-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2.4" result="b" />
                 <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
             </defs>
 
-            {/* Edges */}
-            {EDGES.map((e, i) => {
-              const A = NODES.find((n) => n.id === e.from)!;
-              const B = NODES.find((n) => n.id === e.to)!;
-              const p = edgeProgress(e.from, e.to);
-              const d = e.curved
-                ? `M ${A.x} ${A.y} C ${(A.x + B.x) / 2} ${A.y}, ${(A.x + B.x) / 2} ${B.y}, ${B.x} ${B.y}`
-                : `M ${A.x} ${A.y} L ${B.x} ${B.y}`;
-              const isDev = A.branch === "dev" || B.branch === "dev";
-              return (
-                <path
-                  key={i}
-                  d={d}
-                  fill="none"
-                  stroke={isDev ? "var(--accent)" : "var(--border-strong)"}
-                  strokeWidth="1.2"
-                  strokeOpacity={isDev ? 0.9 : 0.7}
-                  pathLength={1}
-                  strokeDasharray="1"
-                  strokeDashoffset={1 - p}
-                  style={{ transition: "stroke-dashoffset 120ms linear" }}
-                />
-              );
-            })}
+            {/* HEAD label */}
+            <text
+              x={40}
+              y={14}
+              textAnchor="middle"
+              fontFamily="JetBrains Mono, monospace"
+              fontSize="9"
+              fill={progress >= 0.98 ? "var(--accent)" : "var(--muted-foreground)"}
+              style={{ transition: "fill 300ms ease" }}
+            >
+              {progress >= 0.98 ? "HEAD → main" : "HEAD"}
+            </text>
 
-            {/* Nodes */}
-            {NODES.map((n) => {
-              const appear = t >= NODE_TIMES[n.id];
-              const isAccent = n.branch === "dev" || n.branch === "merge" || n.id === "head";
+            {/* Trunk line */}
+            <line
+              x1={40} y1={22} x2={40} y2={NODE_YS[NODE_YS.length - 1] + 6}
+              stroke="var(--border-strong)"
+              strokeOpacity={0.55}
+              strokeWidth={1.1}
+            />
+
+            {/* Commits */}
+            {NODE_YS.map((y, i) => {
+              const on = activated[i];
               return (
-                <g
-                  key={n.id}
-                  style={{
-                    opacity: appear ? 1 : 0,
-                    transform: `scale(${appear ? 1 : 0.4})`,
-                    transformOrigin: `${n.x}px ${n.y}px`,
-                    transition: "opacity 260ms ease, transform 320ms cubic-bezier(.2,.9,.3,1.2)",
-                  }}
-                >
-                  <circle cx={n.x} cy={n.y} r="8" fill="var(--background)" stroke={isAccent ? "var(--accent)" : "var(--foreground)"} strokeWidth="1" />
+                <g key={i}>
                   <circle
-                    cx={n.x} cy={n.y} r="3.6"
-                    fill={isAccent ? "var(--accent)" : "var(--foreground)"}
-                    filter="url(#glow-node)"
+                    cx={40}
+                    cy={y}
+                    r={9}
+                    fill="var(--accent)"
+                    opacity={on ? 0.14 : 0.05}
+                    style={{ transition: "opacity 260ms ease" }}
                   />
-                  {n.label && (
-                    <text
-                      x={n.x}
-                      y={n.branch === "dev" ? n.y + 22 : n.y - 14}
-                      textAnchor="middle"
-                      fontSize="8"
-                      fontFamily="JetBrains Mono, monospace"
-                      fill="var(--muted-foreground)"
-                    >
-                      {n.label}
-                    </text>
-                  )}
+                  <circle
+                    cx={40}
+                    cy={y}
+                    r={on ? 4 : 3.2}
+                    fill={on ? "var(--accent)" : "var(--background)"}
+                    stroke="var(--accent)"
+                    strokeWidth={1}
+                    style={{ transition: "fill 200ms ease, r 200ms ease" }}
+                  />
                 </g>
               );
             })}
+
+            {/* Pulse runner */}
+            <g>
+              <circle
+                cx={40}
+                cy={22 + pulseY}
+                r={11}
+                fill="var(--accent)"
+                opacity={0.22}
+              />
+              <circle
+                cx={40}
+                cy={22 + pulseY}
+                r={4.2}
+                fill="var(--accent)"
+                filter="url(#boot-glow)"
+              />
+            </g>
           </svg>
         </div>
+      </div>
 
-        {/* Log stream */}
-        <div className="mx-auto mb-6 h-[132px] max-w-[540px] overflow-hidden rounded-md border border-border bg-panel/60 p-3 font-mono text-[11px] leading-relaxed">
-          {LOG_LINES.slice(Math.max(0, logIdx - 7), logIdx).map((line, i) => (
-            <div
-              key={i + logIdx}
-              className="animate-fade-up"
-              style={{
-                color: line.startsWith("$") ? "var(--foreground)" : "var(--muted-foreground)",
-              }}
-            >
-              {line}
-            </div>
-          ))}
-          {logIdx < LOG_LINES.length && (
-            <span className="blink text-accent">▍</span>
-          )}
-        </div>
+      {/* Build info — bottom-right, subtle */}
+      <div className="pointer-events-none absolute bottom-5 right-6 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground opacity-50">
+        Build v1.0.0
+        <span className="mx-2 opacity-60">·</span>
+        Cloud <span className="opacity-40">•</span> DevOps <span className="opacity-40">•</span> Agentic AI
+      </div>
 
-        {/* Progress */}
-        <div className="mx-auto max-w-[540px]">
-          <div className="mb-2 flex justify-between font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span>{progress < 100 ? "building" : "repository ready"}</span>
-            <span>{progress}%</span>
-          </div>
-          <div className="h-[2px] w-full overflow-hidden rounded-full bg-panel-2">
-            <div
-              className="h-full bg-accent"
-              style={{ width: `${progress}%`, transition: "width 120ms linear" }}
-            />
-          </div>
-        </div>
+      {/* Session tag — bottom-left */}
+      <div className="pointer-events-none absolute bottom-5 left-6 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground opacity-40">
+        guptaaryandra@cloud
       </div>
     </div>
   );
