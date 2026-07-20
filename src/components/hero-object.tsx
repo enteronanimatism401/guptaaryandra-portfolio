@@ -78,6 +78,21 @@ const branchColor = (branch: Branch, merged?: boolean) => {
   return "var(--accent)";
 };
 
+type StatusKind = "idle" | "running" | "done";
+type StatusMsg = { kind: StatusKind; text: string };
+
+const RUN_STAGES: Array<{ at: number; text: string }> = [
+  { at: 0.00, text: "Replaying commit history..." },
+  { at: 0.18, text: "Checking out feature/ai..." },
+  { at: 0.28, text: "Creating commits on feature/ai..." },
+  { at: 0.40, text: "Merging feature/ai into main..." },
+  { at: 0.55, text: "Checking out feature/devops..." },
+  { at: 0.65, text: "Creating commits on feature/devops..." },
+  { at: 0.82, text: "Merging feature/devops into main..." },
+];
+
+const IDLE_MSG: StatusMsg = { kind: "idle", text: "Hover to replay" };
+
 export function HeroObject() {
   const runnerPathRef = useRef<SVGPathElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -86,12 +101,19 @@ export function HeroObject() {
   const [replays, setReplays] = useState(0);
   const [hoveredCommit, setHoveredCommit] = useState<string | null>(null);
   const [cam, setCam] = useState({ x: 0, y: 0, zoom: 1 });
+  const [status, setStatus] = useState<StatusMsg>(IDLE_MSG);
   const rafRef = useRef<number | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startReplay = () => {
     if (rafRef.current) return;
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
     setReplays((n) => n + 1);
   };
+
 
   useEffect(() => {
     if (replays === 0) return;
