@@ -165,8 +165,9 @@ export function Navbar() {
             type="button"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
             onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
+            className="md:hidden flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
           >
             {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -175,6 +176,7 @@ export function Navbar() {
 
       {/* Mobile slide-in panel */}
       <div
+        id="mobile-nav"
         className="md:hidden fixed inset-0 z-40 pointer-events-none"
         aria-hidden={!menuOpen}
       >
