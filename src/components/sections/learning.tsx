@@ -95,7 +95,7 @@ function StageBadge({ stage }: { stage: Stage }) {
 
 export function Learning() {
   return (
-    <Section id="learning" label="04 · Engineering Lab" title={<TypedTitle /> as unknown as string} meta="./lab/active">
+    <Section id="learning" label="04 · Engineering Lab" title={<TypedTitle />} meta="./lab/active">
       <p className="mb-8 max-w-2xl font-mono text-[12px] leading-relaxed text-muted-foreground reveal">
         Everything here is actively being explored, tested and built. Nothing is
         listed unless it is part of my current engineering roadmap.
