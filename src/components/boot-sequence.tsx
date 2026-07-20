@@ -152,7 +152,7 @@ export function BootSequence() {
         }}
       />
 
-      <div className="relative flex w-full max-w-[880px] flex-col items-start gap-10 px-8 md:flex-row md:items-center md:gap-16">
+      <div className="relative flex w-full max-w-[880px] flex-col items-start gap-8 px-5 pb-24 sm:gap-10 sm:px-8 md:flex-row md:items-center md:gap-16 md:pb-0">
         {/* Terminal output */}
         <div className="flex-1 font-mono text-[12.5px] leading-[1.85] md:text-[13px]">
           {LINES.slice(0, lineIdx + 1).map((line, i) => {
@@ -275,16 +275,16 @@ export function BootSequence() {
         </div>
       </div>
 
-      {/* Build info — bottom-right, subtle */}
-      <div className="pointer-events-none absolute bottom-5 right-6 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground opacity-50">
-        Build v1.0.0
-        <span className="mx-2 opacity-60">·</span>
-        Cloud <span className="opacity-40">•</span> DevOps <span className="opacity-40">•</span> Agentic AI
-      </div>
-
-      {/* Session tag — bottom-left */}
-      <div className="pointer-events-none absolute bottom-5 left-6 font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground opacity-40">
-        guptaaryandra@cloud
+      {/* Footer info — stacked & centered on mobile, split corners on desktop */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-1 px-4 text-center font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:bottom-5 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-6 sm:text-left">
+        <div className="opacity-40 order-2 sm:order-1">guptaaryandra@cloud</div>
+        <div className="opacity-50 order-1 sm:order-2 flex flex-col items-center gap-0.5 sm:flex-row sm:gap-0">
+          <span>Build v1.0.0</span>
+          <span className="hidden sm:inline mx-2 opacity-60">·</span>
+          <span>
+            Cloud <span className="opacity-40">•</span> DevOps <span className="opacity-40">•</span> Agentic AI
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -88,7 +88,7 @@ function ScrambleName() {
     <h1
       className="hero-name font-plex tracking-tight cursor-default select-none"
       style={{
-        fontSize: "clamp(2.25rem, 9vw, 6.5rem)",
+        fontSize: "clamp(2rem, 11vw, 6.5rem)",
         lineHeight: 0.98,
         letterSpacing: "-0.02em",
       }}
@@ -129,14 +129,14 @@ export function Hero() {
               ))}
             </div>
 
-            <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-2 sm:gap-3">
-              <a href="#projects" className="btn-primary group inline-flex min-h-[44px] items-center gap-2 rounded-md bg-foreground px-4 py-2.5 font-mono text-xs text-background">
+            <div className="mt-8 sm:mt-10 flex flex-col xs:flex-row flex-wrap items-stretch xs:items-center gap-2 sm:gap-3">
+              <a href="#projects" className="btn-primary group inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2.5 font-mono text-xs text-background">
                 open projects <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
               </a>
-              <a href="#experience" className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-md border border-border-strong px-4 py-2.5 font-mono text-xs text-foreground">
+              <a href="#experience" className="btn-secondary inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-border-strong px-4 py-2.5 font-mono text-xs text-foreground">
                 explore journey
               </a>
-              <a href="/resume.pdf" target="_blank" rel="noreferrer noopener" className="inline-flex min-h-[44px] items-center gap-2 rounded-md px-3 py-2.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground">
+              <a href="/resume.pdf" target="_blank" rel="noreferrer noopener" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-3 py-2.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground">
                 <Download className="h-3 w-3" /> download resume
               </a>
             </div>
