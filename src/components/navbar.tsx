@@ -111,11 +111,11 @@ export function Navbar() {
         transition: "background 300ms ease, border-color 300ms ease, backdrop-filter 300ms ease",
       }}
     >
-      <div className="mx-auto grid h-14 max-w-[1400px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 sm:px-6 md:px-10">
+      <div className="container-page grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
         <a href="#top" className="flex min-w-0 items-center gap-2 font-plex text-[13px] sm:text-sm">
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent animate-pulse" />
           <span className="truncate text-foreground">guptaaryandra</span>
-          <span className="hidden xs:inline text-muted-foreground">@cloud:~$</span>
+          <span className="hidden sm:inline text-muted-foreground shrink-0">@cloud:~$</span>
         </a>
         <nav className="nav-center hidden font-mono text-[12px] md:flex" data-scrolled={scrolled}>
           {SECTIONS.map((s) => (
