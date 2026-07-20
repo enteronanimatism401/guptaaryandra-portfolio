@@ -23,9 +23,9 @@ function Index() {
         <About />
         <Experience />
         <Projects />
-        <Roadmap />
         <Learning />
         <Stack />
+        <Roadmap />
         <Contact />
       </main>
       <Footer />
