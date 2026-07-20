@@ -209,6 +209,80 @@
   background: var(--panel-2);
 }
 
+/* Deployment row (CI/CD) */
+.deploy-row {
+  position: relative;
+  transition: transform 240ms ease, border-color 240ms ease, background 240ms ease, box-shadow 260ms ease;
+}
+.deploy-row::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  height: 1px; width: 0;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transition: width 600ms ease;
+  pointer-events: none;
+}
+.deploy-row:hover::before { width: 100%; }
+.deploy-row:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--accent) 30%, var(--border));
+  background: color-mix(in oklab, var(--accent) 3%, var(--panel));
+  box-shadow: 0 10px 40px -22px color-mix(in oklab, var(--accent) 55%, transparent);
+}
+.deploy-row:hover .dep-id { color: var(--foreground); }
+
+.service-tag {
+  opacity: 0.55;
+  transition: opacity 300ms ease, color 220ms ease, border-color 220ms ease;
+}
+.deploy-row:hover .service-tag { opacity: 1; color: var(--foreground); }
+
+@keyframes success-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 55%, transparent); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.deploy-row:hover .status-dot { animation: success-pulse 1.2s ease-out; }
+
+@keyframes ellipsis {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+.coming-soon::after {
+  content: "";
+  display: inline-block;
+  width: 0.9em;
+  text-align: left;
+  animation: ellipsis 1.6s steps(1, end) infinite;
+}
+
+/* GitHub link hover */
+.gh-link { position: relative; transition: color 220ms ease; }
+.gh-link .gh-icon { transition: transform 260ms ease; }
+.gh-link .gh-ext {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 220ms ease, transform 260ms ease;
+}
+.gh-link .gh-text { position: relative; }
+.gh-link .gh-text::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms ease;
+}
+.gh-link:hover { color: #fff; }
+.gh-link:hover .gh-icon { transform: rotate(8deg); }
+.gh-link:hover .gh-ext { opacity: 1; transform: translateX(2px); }
+.gh-link:hover .gh-text::after { transform: scaleX(1); }
+
 /* Reveal on scroll */
 .reveal {
   opacity: 0;
