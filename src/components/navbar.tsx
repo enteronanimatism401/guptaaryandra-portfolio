@@ -22,15 +22,29 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const rafRef = useRef<number | null>(null);
+  const lockRef = useRef(false);
+  const lockTimeoutRef = useRef<number | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
 
   const smoothScrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
+    // Lock active state to the tapped id during programmatic scroll so
+    // IntersectionObserver doesn't briefly highlight sections we pass through.
+    lockRef.current = true;
+    setActive(id);
+    if (lockTimeoutRef.current) window.clearTimeout(lockTimeoutRef.current);
+    const releaseLock = () => {
+      lockRef.current = false;
+      lockTimeoutRef.current = null;
+    };
+
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const targetY = el.getBoundingClientRect().top + window.scrollY - 56;
+    if (history.replaceState) history.replaceState(null, "", `#${id}`);
     if (reduce) {
       window.scrollTo(0, targetY);
+      lockTimeoutRef.current = window.setTimeout(releaseLock, 150);
       return;
     }
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -41,10 +55,13 @@ export function Navbar() {
       const t = Math.min(1, (now - start) / DURATION);
       window.scrollTo(0, startY + delta * easeInOut(t));
       if (t < 1) rafRef.current = requestAnimationFrame(step);
-      else rafRef.current = null;
+      else {
+        rafRef.current = null;
+        // Buffer swallows trailing scroll/observer callbacks after settle
+        lockTimeoutRef.current = window.setTimeout(releaseLock, 200);
+      }
     };
     rafRef.current = requestAnimationFrame(step);
-    if (history.replaceState) history.replaceState(null, "", `#${id}`);
   };
 
   const handleAnchor = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -59,11 +76,23 @@ export function Navbar() {
 
     const obs = new IntersectionObserver(
       (entries) => {
+        if (lockRef.current) return;
+        // Pick the intersecting section whose center is closest to viewport center
+        const center = window.innerHeight / 2;
+        let bestId: string | null = null;
+        let bestDist = Infinity;
         entries.forEach((e) => {
-          if (e.isIntersecting) setActive(e.target.id);
+          if (!e.isIntersecting) return;
+          const r = e.boundingClientRect;
+          const dist = Math.abs(r.top + r.height / 2 - center);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestId = e.target.id;
+          }
         });
+        if (bestId) setActive(bestId);
       },
-      { rootMargin: "-40% 0px -55% 0px" }
+      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.01, 0.5, 1] }
     );
     SECTIONS.forEach((s) => {
       const el = document.getElementById(s.id);
@@ -88,6 +117,7 @@ export function Navbar() {
       document.removeEventListener("click", docClick);
       obs.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (lockTimeoutRef.current) window.clearTimeout(lockTimeoutRef.current);
     };
   }, []);
 
