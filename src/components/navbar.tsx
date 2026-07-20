@@ -22,12 +22,12 @@ export function Navbar() {
   const smoothScrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    // Lock active state to the tapped id during programmatic scroll so
-    // IntersectionObserver doesn't briefly highlight sections we pass through.
+    // Lock observer during programmatic scroll; do NOT change active state yet.
+    // Active state updates only once we settle on the destination.
     lockRef.current = true;
-    setActive(id);
     if (lockTimeoutRef.current) window.clearTimeout(lockTimeoutRef.current);
-    const releaseLock = () => {
+    const settle = () => {
+      setActive(id);
       lockRef.current = false;
       lockTimeoutRef.current = null;
     };
@@ -37,7 +37,7 @@ export function Navbar() {
     if (history.replaceState) history.replaceState(null, "", `#${id}`);
     if (reduce) {
       window.scrollTo(0, targetY);
-      lockTimeoutRef.current = window.setTimeout(releaseLock, 150);
+      lockTimeoutRef.current = window.setTimeout(settle, 80);
       return;
     }
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -51,7 +51,7 @@ export function Navbar() {
       else {
         rafRef.current = null;
         // Buffer swallows trailing scroll/observer callbacks after settle
-        lockTimeoutRef.current = window.setTimeout(releaseLock, 200);
+        lockTimeoutRef.current = window.setTimeout(settle, 180);
       }
     };
     rafRef.current = requestAnimationFrame(step);
@@ -321,7 +321,7 @@ export function Navbar() {
           <div className="relative flex h-14 items-center justify-between border-b border-border px-5">
             <div className="flex items-center gap-2 font-plex text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              <span>menu</span>
+              <span>navigation</span>
             </div>
             <button
               type="button"
@@ -335,7 +335,7 @@ export function Navbar() {
 
           {/* Meta line */}
           <div className="relative px-5 pt-5 font-plex text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-            <span className="text-accent">§</span> navigation · 07 modules
+            <span className="text-accent">$</span> site map · {navNumber(TOTAL_SECTIONS - 1)} sections
           </div>
 
           {/* Nav items */}
