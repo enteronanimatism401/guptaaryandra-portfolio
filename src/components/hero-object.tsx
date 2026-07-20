@@ -187,7 +187,7 @@ export function HeroObject() {
   return (
     <div
       ref={wrapRef}
-      className="relative mx-auto flex w-full max-w-[460px] items-center justify-center"
+      className="relative mx-auto flex w-full max-w-[460px] flex-col items-center justify-center"
       onMouseEnter={startReplay}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
