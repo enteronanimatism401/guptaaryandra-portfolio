@@ -137,7 +137,7 @@ function StatusPanel() {
           <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
             <span>load</span><span>steady</span>
           </div>
-          <div className="grid grid-cols-24 gap-[2px]">
+          <div className="grid gap-[2px]" style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}>
             {Array.from({ length: 24 }).map((_, i) => {
               const h = 12 + Math.round(Math.sin(i * 0.7) * 10 + Math.cos(i * 1.3) * 6 + 14);
               return (
