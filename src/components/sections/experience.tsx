@@ -203,12 +203,13 @@ function DependencyTree({
 
   return (
     <div
-      className="font-mono text-[12px] leading-[1.85] select-none"
+      className="font-mono text-[11px] sm:text-[12px] leading-[1.85] select-none -mx-4 sm:mx-0 overflow-x-auto"
       style={{
         opacity: dim ? 0.35 : 1,
         transition: "opacity 400ms ease",
       }}
     >
+      <div className="min-w-max px-4 sm:px-0">
       {lines.map((ln, idx) => {
         const isHover = hovered === ln.key;
         const delay = startDelay + idx * perLineDelay;
