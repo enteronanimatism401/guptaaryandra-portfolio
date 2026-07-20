@@ -1,3 +1,4 @@
+import { TypedTitle } from "../typed-title";
 import { Section } from "../section";
 import { ExternalLink, Github } from "lucide-react";
 

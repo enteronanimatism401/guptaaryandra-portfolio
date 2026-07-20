@@ -1,3 +1,4 @@
+import { TypedTitle } from "../typed-title";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Section } from "../section";
 

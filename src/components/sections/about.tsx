@@ -1,3 +1,4 @@
+import { TypedTitle } from "../typed-title";
 import { useState } from "react";
 import { Section } from "../section";
 
