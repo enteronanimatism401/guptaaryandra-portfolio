@@ -316,8 +316,8 @@ export function HeroObject() {
       </svg>
 
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-2 flex items-center justify-center px-4"
-        style={{ minHeight: "1.25rem" }}
+        className="pointer-events-none mt-12 flex w-full items-center justify-center px-4 md:mt-14"
+        style={{ minHeight: "1.75rem" }}
         aria-live="polite"
       >
         <div className="relative w-full max-w-[360px] text-center" style={{ minHeight: "1.25rem" }}>
@@ -349,6 +349,7 @@ export function HeroObject() {
           </span>
         </div>
       </div>
+
 
     </div>
   );
