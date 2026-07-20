@@ -10,9 +10,9 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "about", label: "README", desktop: true },
   { id: "experience", label: "LOGBOOK", desktop: true },
   { id: "projects", label: "DEPLOYMENTS", desktop: true },
-  { id: "roadmap", label: "TRAJECTORY", desktop: false },
   { id: "learning", label: "LAB", desktop: true },
   { id: "stack", label: "ECOSYSTEM", desktop: true },
+  { id: "roadmap", label: "TRAJECTORY", desktop: true },
   { id: "contact", label: "CONNECT", desktop: true },
 ];
 
