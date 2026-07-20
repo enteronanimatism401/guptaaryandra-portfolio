@@ -82,7 +82,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=document.documentElement;if(t==='light'){d.classList.add('light');d.classList.remove('dark');}else{d.classList.add('dark');d.classList.remove('light');}}catch(e){}try{if('scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}try{window.scrollTo(0,0);}catch(e){}try{document.documentElement.style.overflow='hidden';}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=document.documentElement;if(t==='light'){d.classList.add('light');d.classList.remove('dark');}else{d.classList.add('dark');d.classList.remove('light');}}catch(e){}try{if('scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}try{if(window.location.hash){history.replaceState(null,'',window.location.pathname+window.location.search);}}catch(e){}try{window.scrollTo(0,0);}catch(e){}try{document.documentElement.style.overflow='hidden';}catch(e){}})();`,
           }}
         />
         <HeadContent />
