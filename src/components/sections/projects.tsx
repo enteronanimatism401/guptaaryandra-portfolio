@@ -232,7 +232,7 @@ export function Projects() {
 
       <DeploymentSummary />
       <div className="panel soft-shadow rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[140px_minmax(0,1.6fr)_140px_minmax(0,1fr)_160px] gap-4 border-b border-border bg-panel-2 px-6 py-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="hidden md:grid grid-cols-[130px_minmax(0,1.6fr)_130px_minmax(0,1fr)_150px] gap-4 border-b border-border bg-panel-2 px-6 py-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <div>deployment id</div>
           <div>deployment</div>
           <div>status</div>
