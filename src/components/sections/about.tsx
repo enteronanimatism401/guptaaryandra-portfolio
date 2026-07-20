@@ -97,9 +97,9 @@ export function About() {
   return (
     <Section
       id="about"
-      label="01 · About"
-      title="Learning by shipping, not by watching."
-      meta="./about.md"
+      label="01 · README"
+      title="Infrastructure first. Shipping over theory."
+      meta="./README.md"
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5 text-[15px] leading-relaxed text-foreground/85 reveal">

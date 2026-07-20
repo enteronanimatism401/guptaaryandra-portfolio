@@ -10,7 +10,7 @@ const NODES = [
 
 export function Roadmap() {
   return (
-    <Section id="roadmap" label="06 · Trajectory" title="The path — one deployment at a time." meta="./roadmap.timeline">
+    <Section id="roadmap" label="07 · Trajectory" title="The path — one deployment at a time." meta="./roadmap.timeline">
       <ol className="relative border-l border-border pl-6 md:pl-10">
         {NODES.map((n, i) => (
           <li key={n.title} className="relative pb-10 last:pb-0 reveal">

@@ -3,12 +3,12 @@ import { Github, Linkedin, FileText } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
 const SECTIONS = [
-  { id: "about", label: "About" },
-  { id: "experience", label: "Experience" },
-  { id: "projects", label: "Projects" },
-  { id: "learning", label: "Learning" },
-  { id: "stack", label: "Stack" },
-  { id: "contact", label: "Contact" },
+  { id: "about", label: "README" },
+  { id: "experience", label: "LOGBOOK" },
+  { id: "projects", label: "DEPLOYMENTS" },
+  { id: "learning", label: "LAB" },
+  { id: "stack", label: "STACK" },
+  { id: "contact", label: "CONNECT" },
 ];
 
 const DURATION = 800;
@@ -111,7 +111,7 @@ export function Navbar() {
               data-active={active === s.id}
               onClick={(e) => handleAnchor(e, s.id)}
             >
-              {s.label.toLowerCase()}
+              {s.label}
             </a>
           ))}
         </nav>
