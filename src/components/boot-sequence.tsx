@@ -57,13 +57,28 @@ export function BootSequence() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Force scroll to top on fresh load / refresh
+    try { window.history.scrollRestoration = "manual"; } catch {}
+    window.scrollTo(0, 0);
     // Lock body scroll during boot
-    const prev = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, []);
+
+  // When the boot screen is hidden, ensure scroll is unlocked and page is at top
+  useEffect(() => {
+    if (visible) return;
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    window.scrollTo(0, 0);
+  }, [visible]);
+
 
   // Type each line char-by-char, then advance.
   useEffect(() => {
