@@ -10,7 +10,6 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { CommandCursor } from "@/components/command-cursor";
 import { AmbientBackground } from "@/components/ambient-background";
 import { BootSequence } from "@/components/boot-sequence";
 
@@ -104,7 +103,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AmbientBackground />
-      {hydrated && <CommandCursor />}
       {hydrated && <BootSequence />}
       <Outlet />
     </QueryClientProvider>

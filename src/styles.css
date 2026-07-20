@@ -99,9 +99,6 @@
     background: var(--color-accent);
     color: var(--color-accent-foreground);
   }
-  @media (min-width: 768px) {
-    html, body, * { cursor: none !important; }
-  }
 }
 
 /* Utility classes */
@@ -216,9 +213,66 @@
 .reveal {
   opacity: 0;
   transform: translateY(14px);
-  transition: opacity 700ms ease, transform 700ms ease;
+  transition: opacity 700ms ease, transform 700ms ease, filter 700ms ease;
+  filter: blur(4px);
 }
 .reveal.in {
   opacity: 1;
   transform: translateY(0);
+  filter: blur(0);
 }
+
+/* Primary button */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: transform 220ms ease, box-shadow 260ms ease, background-color 220ms ease, color 220ms ease;
+  box-shadow: 0 1px 0 0 rgba(255,255,255,0.03) inset, 0 8px 24px -12px rgba(0,0,0,0.4);
+}
+.btn-primary:hover {
+  transform: translateY(-1px) scale(1.02);
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 40%, transparent),
+              0 16px 40px -18px color-mix(in oklab, var(--accent) 70%, transparent);
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, color-mix(in oklab, var(--accent) 40%, transparent) 50%, transparent 80%);
+  transform: translateX(-100%);
+  transition: transform 700ms ease;
+  pointer-events: none;
+}
+.btn-primary:hover::after { transform: translateX(100%); }
+
+/* Secondary button */
+.btn-secondary {
+  position: relative;
+  overflow: hidden;
+  transition: color 220ms ease, border-color 220ms ease, transform 220ms ease, background-color 260ms ease;
+}
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: color-mix(in oklab, var(--accent) 8%, transparent);
+}
+
+/* Hero name hover — subtle glow + tracking */
+.hero-name {
+  transition: letter-spacing 400ms ease, text-shadow 400ms ease;
+}
+.hero-name:hover {
+  letter-spacing: 0.005em;
+  text-shadow: 0 0 24px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* Navbar slide-in */
+@keyframes nav-slide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+header { animation: nav-slide 500ms ease both; }
+
