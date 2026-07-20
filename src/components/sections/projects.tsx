@@ -137,23 +137,23 @@ function StatusBadge({ status }: { status: Project["status"] }) {
 function Row({ p, index }: { p: Project; index: number }) {
   return (
     <div
-      className="deploy-row group grid gap-3 border-b border-border px-6 py-5 last:border-b-0 md:grid-cols-[140px_minmax(0,1.6fr)_140px_minmax(0,1fr)_160px] md:items-center reveal"
+      className="deploy-row group grid gap-3 border-b border-border px-4 py-4 last:border-b-0 sm:px-6 sm:py-5 md:grid-cols-[130px_minmax(0,1.6fr)_130px_minmax(0,1fr)_150px] md:items-center reveal"
       style={{ transitionDelay: `${index * 90}ms` }}
     >
-      <div>
-        <div className="dep-id font-mono text-[12px] text-muted-foreground transition-colors">{p.id}</div>
-        <div className="mt-1 font-mono text-[10px] text-muted-foreground/60">
+      <div className="min-w-0">
+        <div className="dep-id font-mono text-[12px] text-muted-foreground transition-colors break-all">{p.id}</div>
+        <div className="mt-1 font-mono text-[10px] text-muted-foreground/60 break-all">
           commit <span className="text-muted-foreground/80">{p.commit}</span>
         </div>
       </div>
 
-      <div>
-        <div className="text-foreground font-plex">{p.title}</div>
+      <div className="min-w-0">
+        <div className="text-foreground font-plex break-words">{p.title}</div>
         <div className="mt-1.5 grid gap-x-4 gap-y-0.5 font-mono text-[11px] text-muted-foreground sm:grid-cols-[auto_1fr]">
           {p.meta.map((m) => (
             <div key={m.label} className="contents">
               <span className="text-muted-foreground/60 uppercase tracking-wider text-[10px]">{m.label}</span>
-              <span className="text-foreground/80">{m.value}</span>
+              <span className="text-foreground/80 break-words">{m.value}</span>
             </div>
           ))}
         </div>
@@ -173,16 +173,16 @@ function Row({ p, index }: { p: Project; index: number }) {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-start gap-4 font-mono text-[11px] md:justify-end">
+      <div className="flex flex-wrap items-center justify-start gap-3 sm:gap-4 font-mono text-[11px] md:justify-end">
         {p.github && (
-          <a href={p.github} target="_blank" rel="noopener noreferrer" className="gh-link inline-flex items-center gap-1.5 text-muted-foreground">
+          <a href={p.github} target="_blank" rel="noopener noreferrer" className="gh-link inline-flex min-h-[36px] items-center gap-1.5 text-muted-foreground">
             <Github className="gh-icon h-3.5 w-3.5" />
             <span className="gh-text">github</span>
             <ExternalLink className="gh-ext h-3 w-3" />
           </a>
         )}
         {p.live && (
-          <a href={p.live} target="_blank" rel="noopener noreferrer" className="gh-link inline-flex items-center gap-1.5 text-muted-foreground">
+          <a href={p.live} target="_blank" rel="noopener noreferrer" className="gh-link inline-flex min-h-[36px] items-center gap-1.5 text-muted-foreground">
             <ExternalLink className="gh-icon h-3.5 w-3.5" />
             <span className="gh-text">live</span>
           </a>
