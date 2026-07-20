@@ -1,18 +1,102 @@
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Download, MapPin } from "lucide-react";
 import { HeroObject } from "./hero-object";
 
+const NAME_LINES = ["ARYANDRA", "GUPTA"] as const;
+const SEQUENCE: Array<readonly [string, string]> = [
+  ["ARYANDRA", "GUPTA"],
+  ["CLOUD", ""],
+  ["DEVOPS", ""],
+  ["AGENTIC", "AI"],
+  ["ARYANDRA", "GUPTA"],
+];
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&?/*";
+const SCRAMBLE_MS = 500;
+const PAUSE_MS = 400;
+
+function randChar() {
+  return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+}
+
+function scrambleTowards(target: string, progress: number) {
+  const revealed = Math.floor(target.length * progress);
+  let out = "";
+  for (let i = 0; i < target.length; i++) {
+    if (target[i] === " ") out += " ";
+    else if (i < revealed) out += target[i];
+    else out += randChar();
+  }
+  return out;
+}
+
 function ScrambleName() {
+  const [lines, setLines] = useState<readonly [string, string]>(["ARYANDRA", "GUPTA"]);
+  const playingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const timeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+
+  const cleanup = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    timeoutsRef.current.forEach((t) => clearTimeout(t));
+    timeoutsRef.current = [];
+  };
+
+  useEffect(() => cleanup, []);
+
+  const runStep = (from: readonly [string, string], to: readonly [string, string], done: () => void) => {
+    const start = performance.now();
+    const step = (now: number) => {
+      const p = Math.min(1, (now - start) / SCRAMBLE_MS);
+      const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      const l1 = scrambleTowards(to[0], eased);
+      const l2 = scrambleTowards(to[1], eased);
+      setLines([l1, l2]);
+      if (p < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        setLines(to);
+        done();
+      }
+    };
+    rafRef.current = requestAnimationFrame(step);
+  };
+
+  const play = () => {
+    if (playingRef.current) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    playingRef.current = true;
+
+    let i = 0;
+    const next = () => {
+      if (i >= SEQUENCE.length - 1) {
+        playingRef.current = false;
+        return;
+      }
+      const from = SEQUENCE[i];
+      const to = SEQUENCE[i + 1];
+      i++;
+      runStep(from, to, () => {
+        const t = setTimeout(next, PAUSE_MS);
+        timeoutsRef.current.push(t);
+      });
+    };
+    next();
+  };
+
   return (
     <h1
-      className="hero-name font-plex tracking-tight"
+      className="hero-name font-plex tracking-tight cursor-default select-none"
       style={{
         fontSize: "clamp(2.75rem, 7.5vw, 6.5rem)",
         lineHeight: 0.98,
         letterSpacing: "-0.02em",
       }}
+      onMouseEnter={play}
+      aria-label={NAME_LINES.join(" ")}
     >
-      <span className="block whitespace-nowrap">ARYANDRA</span>
-      <span className="block whitespace-nowrap">GUPTA</span>
+      <span className="block whitespace-nowrap">{lines[0] || "\u00A0"}</span>
+      <span className="block whitespace-nowrap">{lines[1] || "\u00A0"}</span>
     </h1>
   );
 }
