@@ -1,3 +1,4 @@
+import { TypedTitle } from "../typed-title";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Section } from "../section";
 
@@ -191,7 +192,7 @@ export function Stack() {
     <Section
       id="stack"
       label="05 · Engineering Ecosystem"
-      title="Engineering is understanding how systems connect."
+      title={<TypedTitle text="Engineering is understanding how systems connect." />}
       meta="./ecosystem/graph"
     >
       <p className="mb-10 max-w-2xl font-mono text-[12px] leading-relaxed text-muted-foreground reveal">

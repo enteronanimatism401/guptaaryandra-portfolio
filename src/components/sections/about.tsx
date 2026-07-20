@@ -1,3 +1,4 @@
+import { TypedTitle } from "../typed-title";
 import { useState } from "react";
 import { Section } from "../section";
 
@@ -98,7 +99,7 @@ export function About() {
     <Section
       id="about"
       label="01 · README"
-      title="Infrastructure first. Shipping over theory."
+      title={<TypedTitle text="Infrastructure first. Shipping over theory." />}
       meta="./README.md"
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_360px]">

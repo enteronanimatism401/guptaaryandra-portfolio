@@ -1,3 +1,4 @@
+import { TypedTitle } from "../typed-title";
 import { Section } from "../section";
 import { Github, Linkedin, Mail, FileText, ArrowUpRight } from "lucide-react";
 
@@ -10,7 +11,7 @@ const LINKS = [
 
 export function Contact() {
   return (
-    <Section id="contact" label="06 · Connect" title="Let's build something." meta="./connect">
+    <Section id="contact" label="06 · Connect" title={<TypedTitle text="Let's build something." />} meta="./connect">
       <div className="grid gap-px overflow-hidden rounded-lg border border-border md:grid-cols-2">
         {LINKS.map(({ icon: Icon, label, value, href }) => (
           <a
