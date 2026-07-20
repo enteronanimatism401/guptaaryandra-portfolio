@@ -184,15 +184,17 @@ export function Navbar() {
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
             <span className="uppercase tracking-[0.16em]">live</span>
           </div>
-          {/* Center: AG monogram */}
+          {/* Center: brand */}
           <a
             href="#top"
             aria-label="Home"
-            className="justify-self-center flex items-baseline gap-0.5 font-plex text-[15px] tracking-[0.08em] text-foreground"
+            className="justify-self-center flex items-baseline font-plex text-foreground whitespace-nowrap"
+            style={{ fontSize: "clamp(11px, 3.6vw, 15px)", letterSpacing: "0.04em" }}
           >
-            <span>AG</span>
-            <span className="text-accent">_</span>
+            <span>guptaaryandra</span>
+            <span className="text-accent animate-pulse">_</span>
           </a>
+
           {/* Right: hamburger */}
           <div className="justify-self-end">
             <button
@@ -391,9 +393,22 @@ export function Navbar() {
                 <ThemeToggle />
               </div>
             </div>
-            <div className="font-plex text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              guptaaryandra<span className="text-accent">@</span>cloud:~$
+            <div className="mt-1 border-t border-border pt-4">
+              <div className="font-plex text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                Contact
+              </div>
+              <a
+                href="mailto:guptaaryandra@gmail.com"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  navigator.clipboard?.writeText("guptaaryandra@gmail.com");
+                }}
+                className="mt-2 inline-block break-all font-plex text-[13px] text-foreground transition-all hover:text-accent hover:[text-shadow:0_0_12px_color-mix(in_oklab,var(--accent)_55%,transparent)] active:scale-[0.98]"
+              >
+                guptaaryandra@gmail.com
+              </a>
             </div>
+
           </div>
         </aside>
       </div>
