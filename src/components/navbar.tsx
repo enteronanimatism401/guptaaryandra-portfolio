@@ -6,10 +6,13 @@ const SECTIONS = [
   { id: "about", label: "README" },
   { id: "experience", label: "LOGBOOK" },
   { id: "projects", label: "DEPLOYMENTS" },
+  { id: "roadmap", label: "TRAJECTORY" },
   { id: "learning", label: "LAB" },
   { id: "stack", label: "ECOSYSTEM" },
   { id: "contact", label: "CONNECT" },
 ];
+
+const DESKTOP_SECTIONS = SECTIONS.filter((s) => s.id !== "roadmap");
 
 const DURATION = 800;
 const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
@@ -19,6 +22,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const rafRef = useRef<number | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
 
   const smoothScrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -66,7 +70,6 @@ export function Navbar() {
       if (el) obs.observe(el);
     });
 
-    // Intercept all in-page anchor clicks (e.g. hero buttons) for smooth scroll
     const docClick = (ev: MouseEvent) => {
       const target = ev.target as HTMLElement | null;
       const a = target?.closest("a") as HTMLAnchorElement | null;
@@ -88,7 +91,7 @@ export function Navbar() {
     };
   }, []);
 
-  // ESC to close + body scroll lock while open
+  // ESC + body scroll lock while open
   useEffect(() => {
     if (!menuOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
@@ -102,147 +105,298 @@ export function Navbar() {
   }, [menuOpen]);
 
   return (
-    <header
-      className="sticky top-0 z-50"
-      style={{
-        background: scrolled ? "color-mix(in oklab, var(--background) 70%, transparent)" : "transparent",
-        borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
-        backdropFilter: scrolled ? "blur(12px) saturate(140%)" : "none",
-        transition: "background 300ms ease, border-color 300ms ease, backdrop-filter 300ms ease",
-      }}
-    >
-      <div className="container-page grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-        <a href="#top" className="flex min-w-0 items-center gap-2 font-plex text-[13px] sm:text-sm">
-          <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent animate-pulse" />
-          <span className="truncate text-foreground">guptaaryandra</span>
-          <span className="hidden sm:inline text-muted-foreground shrink-0">@cloud:~$</span>
-        </a>
-        <nav className="nav-center hidden font-mono text-[12px] md:flex" data-scrolled={scrolled}>
-          {SECTIONS.map((s) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              data-active={active === s.id}
-              onClick={(e) => handleAnchor(e, s.id)}
-            >
-              {s.label}
-            </a>
-          ))}
-        </nav>
-        <div className="md:hidden" />
-
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-          <a
-            href="https://github.com/guptaaryandra"
-            target="_blank"
-            rel="noreferrer noopener"
-            aria-label="GitHub"
-            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-accent hover:text-accent text-muted-foreground transition-all hover:-translate-y-0.5"
-          >
-            <Github className="h-3.5 w-3.5" />
-          </a>
-          <a
-            href="https://linkedin.com/in/gupta-aryandra/"
-            target="_blank"
-            rel="noreferrer noopener"
-            aria-label="LinkedIn"
-            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-accent hover:text-accent text-muted-foreground transition-all hover:-translate-y-0.5"
-          >
-            <Linkedin className="h-3.5 w-3.5" />
-          </a>
-          <a
-            href="/resume.pdf"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Resume"
-            className="hidden lg:flex h-8 items-center gap-1.5 rounded-md border border-border hover:border-accent px-2.5 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <FileText className="h-3 w-3" />
-            resume.pdf
-          </a>
-          <ThemeToggle />
-          <button
-            type="button"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
-          >
-            {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile slide-in panel */}
-      <div
-        id="mobile-nav"
-        className="md:hidden fixed inset-0 z-40 pointer-events-none"
-        aria-hidden={!menuOpen}
+    <>
+      {/* ============= DESKTOP / TABLET NAV (>=768px) ============= */}
+      <header
+        className="sticky top-0 z-50 hidden md:block"
+        style={{
+          background: scrolled ? "color-mix(in oklab, var(--background) 70%, transparent)" : "transparent",
+          borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
+          backdropFilter: scrolled ? "blur(12px) saturate(140%)" : "none",
+          transition: "background 300ms ease, border-color 300ms ease, backdrop-filter 300ms ease",
+        }}
       >
+        <div className="container-page grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+          <a href="#top" className="flex min-w-0 items-center gap-2 font-plex text-sm">
+            <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent animate-pulse" />
+            <span className="truncate text-foreground">guptaaryandra</span>
+            <span className="text-muted-foreground shrink-0">@cloud:~$</span>
+          </a>
+          <nav className="nav-center flex font-mono text-[12px]" data-scrolled={scrolled}>
+            {DESKTOP_SECTIONS.map((s) => (
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                data-active={active === s.id}
+                onClick={(e) => handleAnchor(e, s.id)}
+              >
+                {s.label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center justify-end gap-2">
+            <a
+              href="https://github.com/guptaaryandra"
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label="GitHub"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-accent hover:text-accent text-muted-foreground transition-all hover:-translate-y-0.5"
+            >
+              <Github className="h-3.5 w-3.5" />
+            </a>
+            <a
+              href="https://linkedin.com/in/gupta-aryandra/"
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label="LinkedIn"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-border hover:border-accent hover:text-accent text-muted-foreground transition-all hover:-translate-y-0.5"
+            >
+              <Linkedin className="h-3.5 w-3.5" />
+            </a>
+            <a
+              href="/resume.pdf"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Resume"
+              className="hidden lg:flex h-8 items-center gap-1.5 rounded-md border border-border hover:border-accent px-2.5 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <FileText className="h-3 w-3" />
+              resume.pdf
+            </a>
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      {/* ============= MOBILE NAV (<768px) ============= */}
+      <header
+        className="sticky top-0 z-50 md:hidden"
+        style={{
+          background: scrolled || menuOpen ? "color-mix(in oklab, var(--background) 80%, transparent)" : "transparent",
+          borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
+          backdropFilter: scrolled || menuOpen ? "blur(12px) saturate(140%)" : "none",
+          transition: "background 260ms ease, border-color 260ms ease, backdrop-filter 260ms ease",
+        }}
+      >
+        <div className="grid h-14 grid-cols-3 items-center px-4">
+          {/* Left: status dot */}
+          <div className="flex items-center gap-2 font-plex text-[11px] text-muted-foreground">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="uppercase tracking-[0.16em]">live</span>
+          </div>
+          {/* Center: AG monogram */}
+          <a
+            href="#top"
+            aria-label="Home"
+            className="justify-self-center flex items-baseline gap-0.5 font-plex text-[15px] tracking-[0.08em] text-foreground"
+          >
+            <span>AG</span>
+            <span className="text-accent">_</span>
+          </a>
+          {/* Right: hamburger */}
+          <div className="justify-self-end">
+            <button
+              type="button"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav-panel"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="relative flex h-11 w-11 items-center justify-center rounded-md border border-border text-foreground hover:border-accent transition-colors"
+            >
+              <Menu
+                className="absolute h-4 w-4 transition-all duration-300"
+                style={{
+                  opacity: menuOpen ? 0 : 1,
+                  transform: menuOpen ? "rotate(-90deg) scale(0.6)" : "rotate(0) scale(1)",
+                }}
+              />
+              <X
+                className="absolute h-4 w-4 text-accent transition-all duration-300"
+                style={{
+                  opacity: menuOpen ? 1 : 0,
+                  transform: menuOpen ? "rotate(0) scale(1)" : "rotate(90deg) scale(0.6)",
+                }}
+              />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile full-height slide-in panel */}
+      <div
+        className="md:hidden fixed inset-0 z-40"
+        aria-hidden={!menuOpen}
+        style={{ pointerEvents: menuOpen ? "auto" : "none" }}
+      >
+        {/* Backdrop */}
         <div
           onClick={() => setMenuOpen(false)}
           style={{
             position: "absolute",
             inset: 0,
-            background: "color-mix(in oklab, var(--background) 60%, transparent)",
-            backdropFilter: "blur(6px)",
+            background: "color-mix(in oklab, var(--background) 55%, transparent)",
+            backdropFilter: "blur(8px)",
             opacity: menuOpen ? 1 : 0,
-            transition: "opacity 260ms ease",
-            pointerEvents: menuOpen ? "auto" : "none",
+            transition: "opacity 300ms ease",
           }}
         />
+        {/* Slide-in panel */}
         <aside
+          id="mobile-nav-panel"
+          ref={panelRef as React.RefObject<HTMLElement>}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site navigation"
           style={{
             position: "absolute",
-            top: 56,
-            right: 12,
-            left: 12,
-            padding: "18px",
-            borderRadius: 12,
-            background: "var(--panel)",
-            border: "1px solid var(--border)",
-            boxShadow: "var(--shadow-soft)",
-            transform: menuOpen ? "translateY(0)" : "translateY(-12px)",
-            opacity: menuOpen ? 1 : 0,
-            transition: "opacity 260ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
-            pointerEvents: menuOpen ? "auto" : "none",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: "min(88vw, 360px)",
+            background: "var(--background)",
+            borderLeft: "1px solid var(--border)",
+            boxShadow: "-12px 0 40px rgba(0,0,0,0.35)",
+            transform: menuOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 300ms cubic-bezier(0.22, 1, 0.36, 1)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
           }}
         >
-          <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            <span className="text-accent">§</span> navigation
+          {/* Engineering grid overlay */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+              opacity: 0.35,
+              maskImage: "radial-gradient(ellipse at top right, black 20%, transparent 80%)",
+              WebkitMaskImage: "radial-gradient(ellipse at top right, black 20%, transparent 80%)",
+              pointerEvents: "none",
+            }}
+          />
+          {/* Accent glow */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              top: -80,
+              right: -80,
+              width: 240,
+              height: 240,
+              background: "radial-gradient(circle, color-mix(in oklab, var(--accent) 22%, transparent) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Panel header */}
+          <div className="relative flex h-14 items-center justify-between border-b border-border px-5">
+            <div className="flex items-center gap-2 font-plex text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+              <span>menu</span>
+            </div>
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <nav className="flex flex-col">
-            {SECTIONS.map((s) => (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                onClick={(e) => {
-                  handleAnchor(e, s.id);
-                  setMenuOpen(false);
-                }}
-                data-active={active === s.id}
-                className="flex min-h-[44px] items-center justify-between border-b border-border py-3 font-mono text-[13px] text-muted-foreground last:border-b-0 data-[active=true]:text-accent"
-              >
-                <span>{s.label}</span>
-                <span className="text-muted-foreground/50 text-[11px]">›</span>
-              </a>
-            ))}
+
+          {/* Meta line */}
+          <div className="relative px-5 pt-5 font-plex text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+            <span className="text-accent">§</span> navigation · 07 modules
+          </div>
+
+          {/* Nav items */}
+          <nav className="relative flex flex-1 flex-col gap-1 px-3 pt-4 pb-6 overflow-y-auto">
+            {SECTIONS.map((s, i) => {
+              const isActive = active === s.id;
+              return (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  onClick={(e) => {
+                    handleAnchor(e, s.id);
+                    setMenuOpen(false);
+                  }}
+                  data-active={isActive}
+                  className="group relative flex min-h-[56px] items-center justify-between rounded-md px-4 font-plex text-[15px] transition-all"
+                  style={{
+                    color: isActive ? "var(--accent)" : "var(--foreground)",
+                    background: isActive ? "color-mix(in oklab, var(--accent) 10%, transparent)" : "transparent",
+                    border: "1px solid",
+                    borderColor: isActive ? "color-mix(in oklab, var(--accent) 40%, transparent)" : "transparent",
+                    transform: menuOpen ? "translateX(0)" : "translateX(20px)",
+                    opacity: menuOpen ? 1 : 0,
+                    transition: `transform 380ms cubic-bezier(0.22,1,0.36,1) ${80 + i * 45}ms, opacity 380ms ease ${80 + i * 45}ms, background 200ms ease, color 200ms ease, border-color 200ms ease`,
+                  }}
+                >
+                  <span className="flex items-center gap-3">
+                    <span
+                      className="font-mono text-[10px] tabular-nums"
+                      style={{ color: isActive ? "var(--accent)" : "color-mix(in oklab, var(--muted-foreground) 90%, transparent)" }}
+                    >
+                      0{i + 1}
+                    </span>
+                    <span className="tracking-[0.04em]">{s.label}</span>
+                  </span>
+                  <span
+                    className="font-mono text-[14px] transition-transform duration-200 group-hover:translate-x-1 group-active:translate-x-1"
+                    style={{ color: isActive ? "var(--accent)" : "var(--muted-foreground)" }}
+                  >
+                    {isActive ? "●" : "›"}
+                  </span>
+                </a>
+              );
+            })}
           </nav>
-          <div className="mt-4 flex items-center gap-2">
-            <a href="https://github.com/guptaaryandra" target="_blank" rel="noreferrer noopener" aria-label="GitHub" className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground">
-              <Github className="h-4 w-4" />
-            </a>
-            <a href="https://linkedin.com/in/gupta-aryandra/" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn" className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground">
-              <Linkedin className="h-4 w-4" />
-            </a>
-            <a href="/resume.pdf" target="_blank" rel="noreferrer" className="ml-auto flex h-9 items-center gap-1.5 rounded-md border border-border px-3 font-mono text-[11px] text-muted-foreground">
-              <FileText className="h-3 w-3" />
-              resume.pdf
-            </a>
+
+          {/* Footer actions */}
+          <div className="relative border-t border-border px-5 py-4">
+            <div className="mb-3 flex items-center gap-2">
+              <a
+                href="https://github.com/guptaaryandra"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="GitHub"
+                className="flex h-11 w-11 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent transition-colors"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+              <a
+                href="https://linkedin.com/in/gupta-aryandra/"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="LinkedIn"
+                className="flex h-11 w-11 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-accent hover:border-accent transition-colors"
+              >
+                <Linkedin className="h-4 w-4" />
+              </a>
+              <a
+                href="/resume.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="ml-auto flex h-11 items-center gap-1.5 rounded-md border border-border px-3 font-mono text-[11px] text-muted-foreground hover:text-accent hover:border-accent transition-colors"
+              >
+                <FileText className="h-3 w-3" />
+                resume.pdf
+              </a>
+              <div className="ml-1">
+                <ThemeToggle />
+              </div>
+            </div>
+            <div className="font-plex text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              guptaaryandra<span className="text-accent">@</span>cloud:~$
+            </div>
           </div>
         </aside>
       </div>
-    </header>
+    </>
   );
 }
