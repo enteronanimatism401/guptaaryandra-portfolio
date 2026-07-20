@@ -88,6 +88,19 @@ export function Navbar() {
     };
   }, []);
 
+  // ESC to close + body scroll lock while open
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
   return (
     <header
       className="sticky top-0 z-50"
@@ -98,11 +111,11 @@ export function Navbar() {
         transition: "background 300ms ease, border-color 300ms ease, backdrop-filter 300ms ease",
       }}
     >
-      <div className="mx-auto grid h-14 max-w-[1400px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 sm:px-6 md:px-10">
+      <div className="container-page grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
         <a href="#top" className="flex min-w-0 items-center gap-2 font-plex text-[13px] sm:text-sm">
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent animate-pulse" />
           <span className="truncate text-foreground">guptaaryandra</span>
-          <span className="hidden xs:inline text-muted-foreground">@cloud:~$</span>
+          <span className="hidden sm:inline text-muted-foreground shrink-0">@cloud:~$</span>
         </a>
         <nav className="nav-center hidden font-mono text-[12px] md:flex" data-scrolled={scrolled}>
           {SECTIONS.map((s) => (
@@ -152,8 +165,9 @@ export function Navbar() {
             type="button"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
             onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
+            className="md:hidden flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
           >
             {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -162,6 +176,7 @@ export function Navbar() {
 
       {/* Mobile slide-in panel */}
       <div
+        id="mobile-nav"
         className="md:hidden fixed inset-0 z-40 pointer-events-none"
         aria-hidden={!menuOpen}
       >
@@ -207,7 +222,7 @@ export function Navbar() {
                   setMenuOpen(false);
                 }}
                 data-active={active === s.id}
-                className="flex items-center justify-between border-b border-border py-3 font-mono text-[13px] text-muted-foreground last:border-b-0 data-[active=true]:text-accent"
+                className="flex min-h-[44px] items-center justify-between border-b border-border py-3 font-mono text-[13px] text-muted-foreground last:border-b-0 data-[active=true]:text-accent"
               >
                 <span>{s.label}</span>
                 <span className="text-muted-foreground/50 text-[11px]">›</span>
