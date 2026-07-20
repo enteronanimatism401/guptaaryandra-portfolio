@@ -142,6 +142,21 @@
   box-shadow: var(--shadow-soft);
 }
 
+/* Fluid section title */
+@utility fluid-h2 {
+  font-size: clamp(1.5rem, 4.5vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* Page container */
+@utility container-page {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+}
+
 /* Background grid + scanlines + noise */
 @utility bg-grid {
   background-image:
