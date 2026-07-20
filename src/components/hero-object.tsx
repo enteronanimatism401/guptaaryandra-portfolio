@@ -315,19 +315,41 @@ export function HeroObject() {
         )}
       </svg>
 
-      <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-        {runnerPt ? (
-          <span>
-            <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full bg-accent align-middle" />
-            replaying history
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-2 flex items-center justify-center px-4"
+        style={{ minHeight: "1.25rem" }}
+        aria-live="polite"
+      >
+        <div className="relative w-full max-w-[360px] text-center" style={{ minHeight: "1.25rem" }}>
+          <span
+            key={status.text}
+            className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+            style={{
+              animation: "status-fade 260ms ease-out both",
+            }}
+          >
+            {status.kind === "done" ? (
+              <span className="text-[11px] leading-none" style={{ color: "var(--success)" }}>✓</span>
+            ) : (
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full align-middle"
+                style={{
+                  background:
+                    status.kind === "running"
+                      ? "var(--accent)"
+                      : "color-mix(in oklab, var(--muted-foreground) 60%, transparent)",
+                  boxShadow:
+                    status.kind === "running"
+                      ? "0 0 8px color-mix(in oklab, var(--accent) 70%, transparent)"
+                      : "none",
+                }}
+              />
+            )}
+            <span className="truncate">{status.text}</span>
           </span>
-        ) : (
-          <span>
-            <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full align-middle" style={{ background: "var(--success)" }} />
-            merged successfully · hover to replay
-          </span>
-        )}
+        </div>
       </div>
+
     </div>
   );
 }
