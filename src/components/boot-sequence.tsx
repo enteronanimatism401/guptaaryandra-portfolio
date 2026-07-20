@@ -22,10 +22,11 @@ const LINES: Line[] = [
   { cmd: "Connecting infrastructure graph...", ok: "✓ Ecosystem online" },
   { cmd: "Syncing repository state..." },
   { cmd: "Checking dependencies..." },
-  { cmd: "Restoring session..." },
-  { cmd: "HEAD → main" },
-  { cmd: "Welcome back, Aryandra." },
-  { cmd: "Launching Control Center..." },
+ { cmd: "Restoring engineering workspace..." },
+ { cmd: "HEAD → main" },
+ { cmd: "Session Ready." },
+ { cmd: "Welcome to my Engineering Workspace." },
+ { cmd: "Launching Control Center..." },
 ];
 
 // Per-character typing speed (ms). Kept lively but readable.
