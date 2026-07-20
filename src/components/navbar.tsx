@@ -40,32 +40,34 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur-md"
+      className="sticky top-0 z-50"
       style={{
-        background: scrolled ? "color-mix(in oklab, var(--background) 78%, transparent)" : "transparent",
+        background: scrolled ? "color-mix(in oklab, var(--background) 70%, transparent)" : "transparent",
         borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
-        transition: "background 300ms ease, border-color 300ms ease",
+        backdropFilter: scrolled ? "blur(12px) saturate(140%)" : "none",
+        transition: "background 300ms ease, border-color 300ms ease, backdrop-filter 300ms ease",
       }}
     >
-      <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-8 px-6 md:px-10">
-        <a href="#top" className="flex items-center gap-2 font-plex text-sm" data-cursor="link">
+      <div className="mx-auto grid h-14 max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 md:px-10">
+        <a href="#top" className="flex items-center gap-2 font-plex text-sm">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
           <span className="text-foreground">guptaaryandra</span>
           <span className="text-muted-foreground">@cloud:~$</span>
         </a>
-        <nav className="hidden items-center gap-6 font-mono text-[13px] text-muted-foreground md:flex">
+        <nav className="nav-center hidden font-mono text-[12px] md:flex" data-scrolled={scrolled}>
           {SECTIONS.map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
               data-active={active === s.id}
-              className="nav-link hover:text-foreground transition-colors"
             >
               {s.label.toLowerCase()}
             </a>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="md:hidden" />
+
+        <div className="flex items-center justify-end gap-2">
           <a
             href="https://github.com/guptaaryandra"
             target="_blank"

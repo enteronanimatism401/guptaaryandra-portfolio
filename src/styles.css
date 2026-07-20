@@ -276,3 +276,54 @@
 }
 header { animation: nav-slide 500ms ease both; }
 
+@keyframes hero-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+@keyframes hero-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Refined centered nav */
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: border-color 300ms ease, background-color 300ms ease, backdrop-filter 300ms ease;
+}
+.nav-center[data-scrolled="true"] {
+  border-color: var(--border);
+  background: color-mix(in oklab, var(--panel) 70%, transparent);
+  backdrop-filter: blur(10px);
+}
+.nav-center a {
+  position: relative;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  transition: color 220ms ease;
+}
+.nav-center a::after {
+  content: "";
+  position: absolute;
+  left: 0.85rem; right: 0.85rem;
+  bottom: 0.15rem;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms ease;
+}
+.nav-center a:hover { color: var(--foreground); }
+.nav-center a:hover::after { transform: scaleX(1); }
+.nav-center a[data-active="true"] {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+}
+.nav-center a[data-active="true"]::after { transform: scaleX(1); }
+
+
