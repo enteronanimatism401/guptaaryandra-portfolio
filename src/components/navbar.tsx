@@ -393,9 +393,22 @@ export function Navbar() {
                 <ThemeToggle />
               </div>
             </div>
-            <div className="font-plex text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              guptaaryandra<span className="text-accent">@</span>cloud:~$
+            <div className="mt-1 border-t border-border pt-4">
+              <div className="font-plex text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+                Contact
+              </div>
+              <a
+                href="mailto:guptaaryandra@gmail.com"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  navigator.clipboard?.writeText("guptaaryandra@gmail.com");
+                }}
+                className="mt-2 inline-block break-all font-plex text-[13px] text-foreground transition-all hover:text-accent hover:[text-shadow:0_0_12px_color-mix(in_oklab,var(--accent)_55%,transparent)] active:scale-[0.98]"
+              >
+                guptaaryandra@gmail.com
+              </a>
             </div>
+
           </div>
         </aside>
       </div>
