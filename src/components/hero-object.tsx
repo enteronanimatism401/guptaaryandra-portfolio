@@ -119,6 +119,8 @@ export function HeroObject() {
     if (replays === 0) return;
     const start = performance.now();
     setProgress(0);
+    setStatus({ kind: "running", text: RUN_STAGES[0].text });
+    let stageIdx = 0;
     const step = (now: number) => {
       const raw = Math.min(1, (now - start) / RUN_DURATION);
       const eased = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
@@ -129,11 +131,21 @@ export function HeroObject() {
         const pt = path.getPointAtLength(eased * len);
         setRunnerPt({ x: pt.x, y: pt.y });
       }
+      while (stageIdx + 1 < RUN_STAGES.length && eased >= RUN_STAGES[stageIdx + 1].at) {
+        stageIdx += 1;
+        const text = RUN_STAGES[stageIdx].text;
+        setStatus({ kind: "running", text });
+      }
       if (raw < 1) {
         rafRef.current = requestAnimationFrame(step);
       } else {
         rafRef.current = null;
+        setStatus({ kind: "done", text: "History replayed successfully" });
         setTimeout(() => setRunnerPt(null), 600);
+        idleTimerRef.current = setTimeout(() => {
+          setStatus(IDLE_MSG);
+          idleTimerRef.current = null;
+        }, 2400);
       }
     };
     rafRef.current = requestAnimationFrame(step);
@@ -142,6 +154,12 @@ export function HeroObject() {
       rafRef.current = null;
     };
   }, [replays]);
+
+  useEffect(() => {
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, []);
 
   const onMouseMove = (e: React.MouseEvent) => {
     const el = wrapRef.current;
@@ -155,6 +173,7 @@ export function HeroObject() {
     setCam({ x: 0, y: 0, zoom: 1 });
     setHoveredCommit(null);
   };
+
 
   const isActivated = (c: Commit) => progress >= c.activateAt;
   const nearRunner = (c: Commit) => {
