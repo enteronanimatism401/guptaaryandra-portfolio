@@ -184,15 +184,17 @@ export function Navbar() {
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
             <span className="uppercase tracking-[0.16em]">live</span>
           </div>
-          {/* Center: AG monogram */}
+          {/* Center: brand */}
           <a
             href="#top"
             aria-label="Home"
-            className="justify-self-center flex items-baseline gap-0.5 font-plex text-[15px] tracking-[0.08em] text-foreground"
+            className="justify-self-center flex items-baseline font-plex text-foreground whitespace-nowrap"
+            style={{ fontSize: "clamp(11px, 3.6vw, 15px)", letterSpacing: "0.04em" }}
           >
-            <span>AG</span>
-            <span className="text-accent">_</span>
+            <span>guptaaryandra</span>
+            <span className="text-accent animate-pulse">_</span>
           </a>
+
           {/* Right: hamburger */}
           <div className="justify-self-end">
             <button
