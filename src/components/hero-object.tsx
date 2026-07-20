@@ -78,6 +78,21 @@ const branchColor = (branch: Branch, merged?: boolean) => {
   return "var(--accent)";
 };
 
+type StatusKind = "idle" | "running" | "done";
+type StatusMsg = { kind: StatusKind; text: string };
+
+const RUN_STAGES: Array<{ at: number; text: string }> = [
+  { at: 0.00, text: "Replaying commit history..." },
+  { at: 0.18, text: "Checking out feature/ai..." },
+  { at: 0.28, text: "Creating commits on feature/ai..." },
+  { at: 0.40, text: "Merging feature/ai into main..." },
+  { at: 0.55, text: "Checking out feature/devops..." },
+  { at: 0.65, text: "Creating commits on feature/devops..." },
+  { at: 0.82, text: "Merging feature/devops into main..." },
+];
+
+const IDLE_MSG: StatusMsg = { kind: "idle", text: "Hover to replay" };
+
 export function HeroObject() {
   const runnerPathRef = useRef<SVGPathElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -86,17 +101,26 @@ export function HeroObject() {
   const [replays, setReplays] = useState(0);
   const [hoveredCommit, setHoveredCommit] = useState<string | null>(null);
   const [cam, setCam] = useState({ x: 0, y: 0, zoom: 1 });
+  const [status, setStatus] = useState<StatusMsg>(IDLE_MSG);
   const rafRef = useRef<number | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startReplay = () => {
     if (rafRef.current) return;
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
     setReplays((n) => n + 1);
   };
+
 
   useEffect(() => {
     if (replays === 0) return;
     const start = performance.now();
     setProgress(0);
+    setStatus({ kind: "running", text: RUN_STAGES[0].text });
+    let stageIdx = 0;
     const step = (now: number) => {
       const raw = Math.min(1, (now - start) / RUN_DURATION);
       const eased = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
@@ -107,11 +131,21 @@ export function HeroObject() {
         const pt = path.getPointAtLength(eased * len);
         setRunnerPt({ x: pt.x, y: pt.y });
       }
+      while (stageIdx + 1 < RUN_STAGES.length && eased >= RUN_STAGES[stageIdx + 1].at) {
+        stageIdx += 1;
+        const text = RUN_STAGES[stageIdx].text;
+        setStatus({ kind: "running", text });
+      }
       if (raw < 1) {
         rafRef.current = requestAnimationFrame(step);
       } else {
         rafRef.current = null;
+        setStatus({ kind: "done", text: "History replayed successfully" });
         setTimeout(() => setRunnerPt(null), 600);
+        idleTimerRef.current = setTimeout(() => {
+          setStatus(IDLE_MSG);
+          idleTimerRef.current = null;
+        }, 2400);
       }
     };
     rafRef.current = requestAnimationFrame(step);
@@ -120,6 +154,12 @@ export function HeroObject() {
       rafRef.current = null;
     };
   }, [replays]);
+
+  useEffect(() => {
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, []);
 
   const onMouseMove = (e: React.MouseEvent) => {
     const el = wrapRef.current;
@@ -133,6 +173,7 @@ export function HeroObject() {
     setCam({ x: 0, y: 0, zoom: 1 });
     setHoveredCommit(null);
   };
+
 
   const isActivated = (c: Commit) => progress >= c.activateAt;
   const nearRunner = (c: Commit) => {
@@ -274,19 +315,41 @@ export function HeroObject() {
         )}
       </svg>
 
-      <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-        {runnerPt ? (
-          <span>
-            <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full bg-accent align-middle" />
-            replaying history
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-2 flex items-center justify-center px-4"
+        style={{ minHeight: "1.25rem" }}
+        aria-live="polite"
+      >
+        <div className="relative w-full max-w-[360px] text-center" style={{ minHeight: "1.25rem" }}>
+          <span
+            key={status.text}
+            className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+            style={{
+              animation: "status-fade 260ms ease-out both",
+            }}
+          >
+            {status.kind === "done" ? (
+              <span className="text-[11px] leading-none" style={{ color: "var(--success)" }}>✓</span>
+            ) : (
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full align-middle"
+                style={{
+                  background:
+                    status.kind === "running"
+                      ? "var(--accent)"
+                      : "color-mix(in oklab, var(--muted-foreground) 60%, transparent)",
+                  boxShadow:
+                    status.kind === "running"
+                      ? "0 0 8px color-mix(in oklab, var(--accent) 70%, transparent)"
+                      : "none",
+                }}
+              />
+            )}
+            <span className="truncate">{status.text}</span>
           </span>
-        ) : (
-          <span>
-            <span className="mr-2 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full align-middle" style={{ background: "var(--success)" }} />
-            merged successfully · hover to replay
-          </span>
-        )}
+        </div>
       </div>
+
     </div>
   );
 }
