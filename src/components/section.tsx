@@ -9,7 +9,7 @@ export function Section({
 }: {
   id: string;
   label: string;
-  title: string;
+  title: ReactNode;
   meta?: string;
   children: ReactNode;
 }) {

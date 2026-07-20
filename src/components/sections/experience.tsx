@@ -355,7 +355,7 @@ export function Experience() {
   }, [revealed]);
 
   return (
-    <Section id="experience" label="02 · Experience" title="Engineering logbook." meta="./log/experience">
+    <Section id="experience" label="02 · Engineering Logbook" title="Commits from the field." meta="./log/engineering">
       <div ref={containerRef} className="relative">
         {/* rail base */}
         <div

@@ -228,6 +228,7 @@ function DeploymentTerminal() {
 export function Projects() {
   return (
     <Section id="projects" label="03 · Deployments" title="Deployment records, not marketing cards." meta="./deployments">
+
       <DeploymentSummary />
       <div className="panel soft-shadow rounded-lg overflow-hidden">
         <div className="hidden md:grid grid-cols-[140px_minmax(0,1.6fr)_140px_minmax(0,1fr)_160px] gap-4 border-b border-border bg-panel-2 px-6 py-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
