@@ -227,7 +227,7 @@ function DeploymentTerminal() {
 
 export function Projects() {
   return (
-    <Section id="projects" label="03 · Deployments" title="Deployment records, not marketing cards." meta="./deployments">
+    <Section id="projects" label="03 · Deployments" title={<TypedTitle text="Deployment records, not marketing cards." />} meta="./deployments">
 
       <DeploymentSummary />
       <div className="panel soft-shadow rounded-lg overflow-hidden">
