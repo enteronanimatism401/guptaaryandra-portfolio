@@ -1,18 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, FileText, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { NAV_ITEMS, navNumber } from "@/lib/nav-config";
 
-const SECTIONS = [
-  { id: "about", label: "README" },
-  { id: "experience", label: "LOGBOOK" },
-  { id: "projects", label: "DEPLOYMENTS" },
-  { id: "roadmap", label: "TRAJECTORY" },
-  { id: "learning", label: "LAB" },
-  { id: "stack", label: "ECOSYSTEM" },
-  { id: "contact", label: "CONNECT" },
-];
-
-const DESKTOP_SECTIONS = SECTIONS.filter((s) => s.id !== "roadmap");
+const SECTIONS = NAV_ITEMS;
+const DESKTOP_SECTIONS = NAV_ITEMS.filter((s) => s.desktop);
+const TOTAL_SECTIONS = NAV_ITEMS.length;
 
 const DURATION = 800;
 const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
