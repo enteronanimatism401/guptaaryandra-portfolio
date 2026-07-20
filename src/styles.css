@@ -416,6 +416,8 @@ header { animation: nav-slide 500ms ease both; }
   to { opacity: 1; }
 }
 
-
-
+@keyframes status-fade {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
