@@ -203,13 +203,13 @@ function DependencyTree({
 
   return (
     <div
-      className="font-mono text-[11px] sm:text-[12px] leading-[1.85] select-none -mx-4 sm:mx-0 overflow-x-auto"
+      className="font-mono text-[11px] sm:text-[12px] leading-[1.85] select-none overflow-x-auto"
       style={{
         opacity: dim ? 0.35 : 1,
         transition: "opacity 400ms ease",
       }}
     >
-      <div className="min-w-max px-4 sm:px-0">
+      <div className="min-w-max">
       {lines.map((ln, idx) => {
         const isHover = hovered === ln.key;
         const delay = startDelay + idx * perLineDelay;
@@ -468,7 +468,7 @@ export function Experience() {
                 </div>
 
                 {/* right: dependency trees */}
-                <div className="space-y-8">
+                <div className="space-y-8 pl-8 md:pl-0">
                   {it.trees.map((tree, ti) => (
                     <DependencyTree
                       key={ti}
